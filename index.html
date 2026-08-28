@@ -2103,8 +2103,16 @@ var MK = ["mProject","mClient","mAddr","mNote"], MF = ["project","client","addr"
 function metaFromForm(){
   MK.forEach(function(id,i){ META[MF[i]] = (document.getElementById(id).value || "").trim(); });
 }
-function metaToForm(){
-  MK.forEach(function(id,i){ document.getElementById(id).value = META[MF[i]] || ""; });
+function isEditingMetaField(){
+  var ae = document.activeElement;
+  return !!(ae && MK.indexOf(ae.id) >= 0);
+}
+function metaToForm(force){
+  var ae = document.activeElement;
+  MK.forEach(function(id,i){
+    if(!force && ae && ae.id === id) return;
+    document.getElementById(id).value = META[MF[i]] || "";
+  });
   document.getElementById("projTitle").textContent = META.project || "透天住宅室內設計專案";
   var sub = [];
   if(META.client) sub.push("業主 " + META.client);
@@ -2116,7 +2124,7 @@ function metaToForm(){
 function saveMeta(){
   metaFromForm();
   META.updated = nowStr();
-  metaToForm();
+  metaToForm(true);
   if(canStore){
     DB.set("zoneproject", JSON.stringify(META))
       .then(function(){ document.getElementById("mStatus").textContent = "已儲存　" + META.updated; })
@@ -2137,7 +2145,7 @@ function filledOfRoom(rid, data){
   return n;
 }
 function refreshHome(){
-  metaToForm();
+  metaToForm(false);
   var data = collect();
   var totalArea = ROOMS.reduce(function(a,r){ return a + shoelace(r.poly); }, 0);
   var filled = filledCount(data);
