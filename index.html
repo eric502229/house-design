@@ -1,0 +1,2465 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>透天住宅 室內設計提案（主機版）</title>
+<style>
+
+:root{
+  --paper:#fbfbf9; --ink:#14181f; --dim:#7c828c; --rule:#dcdfe4;
+  --acc:#c8442b; --acc2:#2f6fb5; --panel:#f2f3f0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:#e9ebe7;color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  font-size:14px;line-height:1.6;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+#app{position:relative;height:100%;display:flex}
+#stage{position:relative;flex:1;background:linear-gradient(#eef0ec,#dcdfd9)}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+
+/* ---------- 側欄 ---------- */
+#side{
+  width:288px;flex:0 0 288px;background:var(--paper);border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;overflow-y:auto;z-index:5;
+}
+#side h1{margin:0;font-size:16px;font-weight:800;letter-spacing:.01em}
+.head{padding:18px 18px 14px;border-bottom:2px solid var(--ink)}
+.head .sub{font-size:11.5px;color:var(--dim);margin-top:3px}
+.grp{padding:14px 18px;border-bottom:1px solid var(--rule)}
+.grp>.lbl{font-size:10.5px;letter-spacing:.14em;color:var(--dim);margin-bottom:9px}
+.rooms{display:grid;gap:6px}
+button.room{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;cursor:pointer;
+  background:#fff;border:1px solid var(--rule);padding:8px 10px;font:inherit;color:inherit;
+}
+button.room:hover{border-color:#a9aeb5}
+button.room[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.room .fl{
+  font-size:10px;letter-spacing:.08em;font-weight:700;background:var(--ink);color:var(--paper);
+  padding:1px 6px;flex:0 0 auto;
+}
+button.room[aria-pressed="true"] .fl{background:var(--paper);color:var(--ink)}
+button.room .nm{font-size:13.5px;font-weight:600}
+button.room .sz{margin-left:auto;font-size:11px;opacity:.65;font-family:ui-monospace,Menlo,monospace}
+.seg{display:flex;border:1px solid var(--rule)}
+.seg button{
+  flex:1;padding:7px 4px;background:#fff;border:0;border-right:1px solid var(--rule);
+  font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.tgl{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:13px;cursor:pointer}
+.tgl input{accent-color:var(--acc2);width:15px;height:15px}
+dl.st{display:grid;grid-template-columns:auto auto;gap:3px 10px;margin:0;font-size:12.5px}
+dl.st dt{color:var(--dim)}
+dl.st dd{margin:0;text-align:right;font-family:ui-monospace,Menlo,monospace;font-weight:600}
+.note{font-size:11.5px;color:#4a5058;background:var(--panel);padding:8px 10px;border-left:3px solid var(--dim);margin-top:10px}
+.ops{margin-top:10px;font-size:11.5px;width:100%;border-collapse:collapse}
+.ops th{text-align:left;color:var(--dim);font-weight:600;font-size:10.5px;border-bottom:1px solid var(--ink);padding:0 6px 4px 0}
+.ops td{padding:4px 6px 4px 0;border-bottom:1px solid var(--rule);font-family:ui-monospace,Menlo,monospace}
+.ops td.t{font-weight:700;font-family:inherit}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.fl2{list-style:none;margin:6px 0 0;padding:0;font-size:12px}
+.fl2 li{padding:3px 0;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:7px}
+.fl2 .sw{width:11px;height:11px;flex:0 0 auto;border:1px solid rgba(0,0,0,.18)}
+#side .foot{padding:14px 18px 22px;font-size:11px;color:var(--dim)}
+.foot a{color:var(--acc2)}
+
+/* ---------- 疊層 ---------- */
+#hint{
+  position:absolute;left:14px;bottom:14px;background:rgba(251,251,249,.92);border:1px solid var(--rule);
+  padding:7px 11px;font-size:11.5px;color:#4a5058;pointer-events:none;max-width:70vw
+}
+#scalebadge{
+  position:absolute;right:14px;top:14px;background:rgba(251,251,249,.92);border:1px solid var(--rule);
+  padding:6px 10px;font-size:11px;color:var(--dim);font-family:ui-monospace,Menlo,monospace
+}
+#pad{position:absolute;right:16px;bottom:16px;display:none;grid-template-columns:repeat(3,46px);grid-auto-rows:46px;gap:5px}
+#pad button{
+  background:rgba(251,251,249,.92);border:1px solid var(--rule);font-size:17px;cursor:pointer;
+  color:var(--ink);border-radius:3px;user-select:none
+}
+#pad button:active{background:var(--ink);color:var(--paper)}
+body.walk #pad{display:grid}
+body.walk #hint{max-width:52vw}
+#loading{position:absolute;inset:0;display:grid;place-items:center;background:#eef0ec;font-size:13px;color:var(--dim);z-index:9}
+#sideToggle{display:none}
+
+@media (max-width:860px){
+  #app{flex-direction:column}
+  #side{
+    width:100%;flex:0 0 auto;max-height:46vh;order:2;border-right:0;border-top:1px solid var(--rule);
+  }
+  body.folded #side{max-height:0;padding:0;overflow:hidden;border:0}
+  #stage{order:1}
+  #sideToggle{
+    display:block;position:absolute;left:14px;top:14px;z-index:6;background:rgba(251,251,249,.94);
+    border:1px solid var(--rule);padding:7px 12px;font:inherit;font-size:12.5px;cursor:pointer
+  }
+  .head{padding:14px 16px 10px}
+  .grp{padding:12px 16px}
+  #pad{right:12px;bottom:12px}
+}
+
+
+
+#viewzone .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+#viewzone .sheet{max-width:1000px;margin:0 auto;background:var(--paper);padding:0 clamp(16px,4vw,48px) 80px}
+#viewzone header.tb{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;
+ padding:36px 0 16px;border-bottom:2px solid var(--ink)}
+#viewzone header.tb h1{margin:0;font-size:clamp(21px,3vw,28px);font-weight:800}
+#viewzone header.tb .sub{color:var(--dim);font-size:13px;margin-top:5px}
+#viewzone .how{background:var(--panel);border-left:3px solid var(--acc2);padding:13px 16px;margin:24px 0 8px;font-size:13.5px}
+#viewzone .how b{font-weight:700}
+#viewzone .bar{position:sticky;top:93px;z-index:20;background:rgba(251,251,249,.96);border-bottom:1px solid var(--rule);
+ display:flex;gap:8px;align-items:center;padding:10px 0;margin-bottom:6px;flex-wrap:wrap}
+#viewzone .bar button{font:inherit;font-size:13px;padding:7px 14px;border:1px solid var(--ink);background:#fff;
+ color:var(--ink);cursor:pointer}
+#viewzone .bar button.pri{background:var(--ink);color:var(--paper)}
+#viewzone .bar .status{font-size:12px;color:var(--dim);margin-left:auto}
+#viewzone section.room{border-top:1px solid var(--rule);padding-top:30px;margin-top:40px}
+#viewzone .rhead{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline}
+#viewzone .fl{background:var(--ink);color:var(--paper);font-size:11px;padding:2px 8px;letter-spacing:.08em;font-weight:700}
+#viewzone .rhead h2{margin:0;font-size:20px;font-weight:800}
+#viewzone .rhead .meta{font-size:12.5px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+#viewzone .planwrap{margin:18px 0 6px;padding:12px;background:#fff;border:1px solid var(--rule);overflow-x:auto}
+#viewzone .zone{border:1px solid var(--rule);background:#fff;margin:14px 0;padding:14px 16px}
+#viewzone .zhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+#viewzone .zletter{width:24px;height:24px;display:grid;place-items:center;font-weight:800;font-size:13px;
+ color:#fff;flex:0 0 auto}
+#viewzone .zname{font-size:16px;font-weight:700}
+#viewzone .zdim{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+#viewzone .zfact{font-size:12.5px;color:#4a5058;background:var(--panel);padding:7px 10px;margin:8px 0 12px;
+ border-left:3px solid var(--dim)}
+#viewzone #plans{border:1px solid var(--rule);background:#fff;margin:22px 0 4px}
+#viewzone #plans .ph{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:12px 14px;
+ border-bottom:1px solid var(--rule);background:var(--panel)}
+#viewzone #plans .pt{font-size:11px;letter-spacing:.14em;color:var(--dim);font-weight:600}
+#viewzone #plans .ci{font-size:13px;font-weight:600}
+#viewzone #plans .pbtns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+#viewzone #plans button{font:inherit;font-size:12.5px;padding:6px 12px;border:1px solid var(--rule);
+ background:#fff;color:var(--ink);cursor:pointer}
+#viewzone #plans button:hover{border-color:var(--ink)}
+#viewzone #plans button.pri{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#viewzone #plans button.dg{color:var(--acc);border-color:#e6c4bc}
+#viewzone #plans .sf{display:none;gap:6px;padding:12px 14px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+#viewzone #plans .sf.on{display:flex}
+#viewzone #plans .sf input{flex:1;min-width:170px}
+#viewzone .ptable{width:100%;border-collapse:collapse;font-size:13px}
+#viewzone .ptable th{text-align:left;font-size:10.5px;letter-spacing:.1em;color:var(--dim);font-weight:600;
+ padding:9px 12px;border-bottom:1px solid var(--ink);white-space:nowrap}
+#viewzone .ptable td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle}
+#viewzone .ptable tr.cur td{background:#f3f6fb}
+#viewzone .ptable .nm{font-weight:700}
+#viewzone .ptable .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#4a5058;white-space:nowrap}
+#viewzone .ptable .ops2{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+#viewzone .ptable .badge{font-size:11px;background:var(--ink);color:var(--paper);padding:1px 7px;margin-left:6px}
+#viewzone #plans .empty2{padding:16px 14px;font-size:13px;color:var(--dim)}
+#viewzone #plans .swarn{font-size:12px;color:var(--acc);padding:0 14px 12px}
+#viewzone #plans .swarn:empty{display:none}
+#viewhome{font-size:15px}
+#viewhome .sheet{max-width:1000px;margin:0 auto;background:var(--paper);padding:0 clamp(16px,4vw,48px) 80px}
+#viewhome header.tb{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between;
+ padding:36px 0 16px;border-bottom:2px solid var(--ink)}
+#viewhome header.tb h1{margin:0;font-size:clamp(21px,3vw,28px);font-weight:800}
+#viewhome header.tb .sub{color:var(--dim);font-size:13px;margin-top:5px}
+#viewhome .hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+ background:var(--rule);border:1px solid var(--rule);margin:24px 0 0}
+#viewhome .hgrid div{background:var(--panel);padding:13px 15px}
+#viewhome .hgrid dt{font-size:10.5px;letter-spacing:.12em;color:var(--dim);margin:0 0 5px}
+#viewhome .hgrid dd{margin:0;font-size:20px;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+#viewhome .hgrid dd small{font-size:12px;font-weight:400;color:var(--dim);margin-left:4px}
+#viewhome .hbox{border:1px solid var(--rule);background:#fff;margin-top:26px}
+#viewhome .hbt{font-size:11px;letter-spacing:.14em;color:var(--dim);padding:11px 15px;
+ border-bottom:1px solid var(--rule);background:var(--panel)}
+#viewhome .hform{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;padding:15px}
+#viewhome .hform label{display:flex;flex-direction:column;gap:5px;font-size:11px;letter-spacing:.1em;color:var(--dim)}
+#viewhome .hform input{font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--rule);background:#fff;color:var(--ink)}
+#viewhome .hform input:focus{outline:2px solid var(--acc2);outline-offset:-1px}
+#viewhome .hact{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 15px 15px}
+#viewhome .hact button{font:inherit;font-size:13px;padding:8px 16px;border:1px solid var(--ink);
+ background:#fff;color:var(--ink);cursor:pointer}
+#viewhome .hact button.pri{background:var(--ink);color:var(--paper)}
+#viewhome .hstat{font-size:12px;color:var(--dim);margin-left:auto}
+#viewhome .hnote{margin:0;padding:13px 15px 0;font-size:12.5px;color:#4a5058;line-height:1.7}
+#viewhome .hrooms{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--rule)}
+#viewhome .hrc{background:#fff;padding:14px 15px;display:flex;flex-direction:column;gap:7px}
+#viewhome .hrc .t{display:flex;align-items:baseline;gap:8px}
+#viewhome .hrc .fl{background:var(--ink);color:var(--paper);font-size:10px;padding:2px 7px;letter-spacing:.08em;font-weight:700}
+#viewhome .hrc .nm{font-size:15px;font-weight:700}
+#viewhome .hrc .d{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
+#viewhome .hrc .u{font-size:12px;color:#4a5058}
+#viewhome .hrc .bs{display:flex;gap:6px;margin-top:2px}
+#viewhome .hrc button{font:inherit;font-size:12px;padding:5px 11px;border:1px solid var(--rule);
+ background:#fff;color:var(--ink);cursor:pointer}
+#viewhome .hrc button:hover{border-color:var(--ink)}
+#viewhome .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:#4a5058;cursor:pointer}
+#viewhome .chk input{width:15px;height:15px;accent-color:var(--acc2)}
+#viewhome .sbanner{margin:0 15px 12px;padding:11px 13px;background:#e8f0fa;border-left:3px solid var(--acc2);
+ font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#viewhome .sbanner button{font:inherit;font-size:12.5px;padding:5px 12px;border:1px solid var(--acc2);
+ background:var(--acc2);color:#fff;cursor:pointer}
+#viewhome .htodo{margin:0;padding:13px 15px 15px 34px;font-size:13.5px;color:#4a5058}
+#viewhome .htodo li{margin:6px 0}
+#viewzone select.zsel{font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid var(--rule);
+ background:#fff;color:#4a5058;cursor:pointer;max-width:190px}
+#viewzone select.zsel:hover{border-color:var(--ink)}
+#viewzone input.zname{font-size:16px;font-weight:700;border:1px solid transparent;background:transparent;
+ padding:2px 7px;min-width:150px;max-width:100%;flex:0 1 auto;font-family:inherit;color:var(--ink)}
+#viewzone input.zname:hover{border-color:var(--rule);background:#fff}
+#viewzone input.zname:focus{border-color:var(--acc2);background:#fff;outline:none}
+#viewzone .rname{font-size:20px;font-weight:800;border:1px solid transparent;background:transparent;
+ padding:3px 8px;width:auto;min-width:180px;max-width:100%;flex:0 1 auto}
+#viewzone .rname:hover{border-color:var(--rule);background:#fff}
+#viewzone .rname:focus{border-color:var(--acc2);background:#fff}
+#viewzone .ruse{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+#viewzone .rlbl{font-size:10.5px;letter-spacing:.14em;color:var(--dim);flex:0 0 auto}
+#viewzone .ruse .tags{margin:0}
+#viewzone .ruse .picker{flex:1 1 100%}
+#viewzone .znav{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:10px 0 0}
+#viewzone .zchip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;
+ padding:5px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink);cursor:pointer}
+#viewzone .zchip i{width:9px;height:9px;flex:0 0 auto}
+#viewzone .zchip:hover{background:var(--ink);color:var(--paper)}
+#viewzone .zone.flash{outline:2px solid var(--acc2);outline-offset:2px;transition:outline .2s}
+#viewzone .plans{border:1px solid var(--rule);background:#fff;margin:22px 0 6px}
+#viewzone .plans-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;
+ border-bottom:1px solid var(--rule);background:var(--panel)}
+#viewzone .plans-head .ptitle{font-size:11px;letter-spacing:.14em;color:var(--dim);margin-right:auto}
+#viewzone .plans-head button{font:inherit;font-size:12.5px;padding:6px 12px;border:1px solid var(--ink);
+ background:#fff;color:var(--ink);cursor:pointer}
+#viewzone .plans-head button:hover{background:var(--ink);color:var(--paper)}
+#viewzone .pwarn{margin:0;padding:9px 14px;background:#fdf3f1;border-bottom:1px solid var(--rule);
+ font-size:12.5px;color:#8c4033}
+#viewzone .pmeta{display:flex;gap:16px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--rule)}
+#viewzone .pmeta label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);flex:1 1 240px}
+#viewzone .pmeta input{flex:1;font-size:14px;padding:7px 10px}
+#viewzone .ptable-wrap{overflow-x:auto}
+#viewzone .ptable{width:100%;border-collapse:collapse;font-size:13px}
+#viewzone .ptable th{text-align:left;font-size:10.5px;letter-spacing:.1em;color:var(--dim);font-weight:600;
+ padding:9px 12px;border-bottom:1px solid var(--ink);white-space:nowrap}
+#viewzone .ptable td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle;white-space:nowrap}
+#viewzone .ptable tr.cur td{background:#f3f6fa}
+#viewzone .ptable tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--acc2);font-weight:700}
+#viewzone .ptable .act{display:flex;gap:5px}
+#viewzone .ptable .act button{font:inherit;font-size:11.5px;padding:4px 9px;border:1px solid var(--rule);
+ background:#fff;color:var(--ink);cursor:pointer}
+#viewzone .ptable .act button:hover{border-color:var(--ink)}
+#viewzone .ptable .act button.dg{color:var(--acc);border-color:#e6c9c1}
+#viewzone .ptable .empty{color:var(--dim);font-size:12.5px}
+#viewzone .ptable .mono2{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#4a5058}
+#viewzone .tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+#viewzone .tag{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--rule);
+ padding:4px 6px 4px 10px;font-size:12.5px}
+#viewzone .tag button{border:0;background:none;cursor:pointer;color:var(--acc);font-size:15px;line-height:1;padding:0 2px}
+#viewzone .tags .empty{font-size:12px;color:var(--dim)}
+#viewzone .pickbtn{font:inherit;font-size:12.5px;padding:7px 14px;border:1px dashed #9aa0a6;background:#fff;
+ cursor:pointer;color:var(--ink)}
+#viewzone .pickbtn:hover{border-color:var(--ink)}
+#viewzone .picker{display:none;border:1px solid var(--rule);background:#fdfdfc;padding:12px;margin-top:8px}
+#viewzone .picker.on{display:block}
+#viewzone .psearch{margin-bottom:10px}
+#viewzone .pgroup{margin-bottom:12px}
+#viewzone .pgroup h4{margin:0 0 6px;font-size:10.5px;letter-spacing:.12em;color:var(--dim);font-weight:600}
+#viewzone .chips{display:flex;flex-wrap:wrap;gap:5px}
+#viewzone .chip{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--rule);background:#fff;
+ cursor:pointer;color:var(--ink)}
+#viewzone .chip:hover{border-color:var(--ink)}
+#viewzone .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#viewzone .addrow{display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--rule);padding-top:10px}
+#viewzone .addrow input{flex:1}
+#viewzone .addrow .addbtn{font:inherit;font-size:13px;padding:7px 16px;border:1px solid var(--ink);
+ background:var(--ink);color:var(--paper);cursor:pointer}
+#viewzone .slots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+#viewzone .slot{display:flex;align-items:center;gap:9px;border:1px solid var(--rule);background:#fff;
+ padding:7px 11px;cursor:pointer}
+#viewzone .slot.act{outline:2px solid var(--acc2);outline-offset:-1px}
+#viewzone .slot i{width:28px;height:28px;display:block;border:1px solid rgba(0,0,0,.16);flex:0 0 auto}
+#viewzone .slot .lb{font-size:10.5px;color:var(--dim);display:block;letter-spacing:.06em}
+#viewzone .slot .nm{font-size:12.5px;font-family:ui-monospace,Menlo,monospace}
+#viewzone .swatches{display:flex;flex-wrap:wrap;gap:4px}
+#viewzone .swx{width:36px;height:36px;border:1px solid rgba(0,0,0,.16);cursor:pointer;padding:0}
+#viewzone .swx:hover{outline:2px solid var(--ink);outline-offset:-2px}
+#viewzone .walk{display:flex;align-items:center;gap:8px;font-size:13px;color:#4a5058;
+ padding:7px 10px;background:var(--panel);cursor:pointer;margin-bottom:4px}
+#viewzone .walk input{width:16px;height:16px;accent-color:#c8442b}
+#viewzone .zone.off{opacity:.5;background:#f6f6f4}
+#viewzone .zone.off .zbody{display:none}
+#viewzone .zone.off .zfact{display:none}
+#viewzone .field{margin:10px 0}
+#viewzone .field label{display:block;font-size:11px;letter-spacing:.12em;color:var(--dim);margin-bottom:5px}
+#viewzone textarea,#viewzone input[type=text]{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--rule);
+ background:#fff;color:var(--ink);border-radius:0;resize:vertical}
+#viewzone textarea:focus,#viewzone input:focus{outline:2px solid var(--acc2);outline-offset:-1px;border-color:var(--acc2)}
+#viewzone textarea{min-height:66px}
+#viewzone .pal{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+#viewzone .sw{display:flex;flex-direction:column;gap:4px}
+#viewzone .sw span{font-size:11px;color:var(--dim)}
+#viewzone input[type=color]{width:56px;height:34px;padding:0;border:1px solid var(--rule);background:#fff;cursor:pointer}
+#viewzone .foot{margin-top:56px;border-top:2px solid var(--ink);padding-top:14px;font-size:12px;color:var(--dim)}
+#viewzone #out{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;margin-top:10px;display:none}
+@media (max-width:640px){#viewzone .sheet{padding-bottom:60px}#viewzone .zone{padding:12px}}
+
+/* ---------- 分頁 ---------- */
+#tabs{position:sticky;top:0;z-index:40;display:flex;background:var(--ink);border-bottom:1px solid #000}
+#tabs button{flex:0 0 auto;font:inherit;font-size:13.5px;padding:12px 20px;background:transparent;border:0;
+ color:rgba(251,251,249,.62);cursor:pointer;border-bottom:3px solid transparent;letter-spacing:.02em}
+#tabs button[aria-selected="true"]{color:var(--paper);border-bottom-color:var(--acc);font-weight:700}
+#tabs .brand{margin-left:auto;align-self:center;padding:0 18px;font-size:11.5px;color:rgba(251,251,249,.45);
+ font-family:ui-monospace,Menlo,monospace;white-space:nowrap}
+.panel{display:none}
+.panel.on{display:block}
+#view3d{height:calc(100vh - 93px);height:calc(100dvh - 93px);overflow:hidden}
+#picker{position:sticky;top:47px;z-index:35;display:flex;align-items:center;gap:8px;background:var(--paper);
+ border-bottom:1px solid var(--rule);padding:0 14px;height:46px;overflow-x:auto;white-space:nowrap}
+#picker .pk-lb{font-size:10.5px;letter-spacing:.14em;color:var(--dim);flex:0 0 auto}
+#picker .pk-g{display:flex;gap:5px;flex:0 0 auto}
+#picker .pk-sep{width:1px;height:20px;background:var(--rule);flex:0 0 auto;margin:0 6px}
+#picker button{font:inherit;font-size:13px;padding:6px 13px;border:1px solid var(--rule);background:#fff;
+ color:var(--ink);cursor:pointer;flex:0 0 auto}
+#picker button:hover{border-color:var(--ink)}
+#picker button.zk{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;font-family:ui-monospace,Menlo,monospace}
+#picker button.zk i{width:8px;height:8px;display:block}
+#picker button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:700}
+@media (max-width:640px){#picker{padding:0 10px;gap:6px}#picker button{padding:6px 11px;font-size:12.5px}}
+#viewzone{font-size:15px}
+@media (max-width:640px){
+  #tabs button{padding:11px 13px;font-size:12.5px}
+  #tabs .brand{display:none}
+}
+
+
+/* ---------- 手機版面 ---------- */
+@media (max-width:640px){
+  #viewzone input[type=text], #viewzone textarea, #viewhome .hform input{font-size:16px}
+  #viewzone .pmeta{flex-direction:column;gap:10px}
+  #viewzone .pmeta label{flex:1 1 auto}
+  #viewzone .ptable th:nth-child(3), #viewzone .ptable td:nth-child(3){display:none}
+  #viewzone .ptable td, #viewzone .ptable th{padding:8px 8px;font-size:12.5px}
+  #viewzone .ptable .act button{padding:6px 8px}
+  #viewzone .plans-head{gap:6px}
+  #viewzone .plans-head button{padding:7px 10px;font-size:12px}
+  #viewzone .bar{gap:6px;padding:8px 0}
+  #viewzone .bar button{padding:8px 12px;font-size:12.5px}
+  #viewzone .bar .status{width:100%;margin-left:0;order:9;font-size:11.5px}
+  #viewzone .zone{padding:12px 11px}
+  #viewzone select.zsel{font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid var(--rule);
+ background:#fff;color:#4a5058;cursor:pointer;max-width:190px}
+#viewzone select.zsel:hover{border-color:var(--ink)}
+#viewzone input.zname{font-size:16px;min-width:0;width:100%}
+  #viewzone .rname{font-size:18px;min-width:0;width:100%}
+  #viewzone .zhead{gap:6px}
+  #viewzone .zdim{width:100%;font-size:11.5px}
+  #viewzone .chip, #viewzone .zchip{font-size:13px;padding:7px 11px}
+  #viewzone .swx{width:42px;height:42px}
+  #viewzone .slot{padding:8px 10px}
+  #viewzone .pickbtn{width:100%;text-align:center;padding:10px}
+  #viewhome .hact{flex-wrap:wrap}
+  #viewhome .hstat{margin-left:0;width:100%;order:9}
+  #viewhome .hgrid{grid-template-columns:repeat(2,1fr)}
+  #viewhome .hrooms{grid-template-columns:1fr}
+  #picker{height:auto;padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<nav id="tabs">
+  <button data-t="home" aria-selected="true">首頁</button>
+  <button data-t="3d" aria-selected="false">3D 預覽</button>
+  <button data-t="zone" aria-selected="false">分區規劃表</button>
+  <span class="brand">A-100 ／ Z-100　主機版</span>
+</nav>
+
+<div id="picker">
+  <span class="pk-lb">樓層</span><div class="pk-g" id="pkFloor"></div>
+  <span class="pk-sep"></span>
+  <span class="pk-lb">空間</span><div class="pk-g" id="pkRoom"></div>
+  <span class="pk-sep"></span>
+  <span class="pk-lb">分區</span><div class="pk-g" id="pkZone"></div>
+</div>
+
+
+<div id="viewhome" class="panel on">
+<div class="sheet">
+
+  <header class="tb">
+    <div>
+      <h1 id="projTitle">透天住宅室內設計專案</h1>
+      <div class="sub" id="projSub">實測資料・配置提案・分區規劃</div>
+    </div>
+    <div class="mono" style="font-size:12px;color:#7c828c">A-100 ／ Z-100</div>
+  </header>
+
+  <div class="hgrid" id="hstats"></div>
+
+  <section class="hbox">
+    <div class="hbt">專案資訊</div>
+    <div class="hform">
+      <label>專案名稱<input type="text" id="mProject" placeholder="例：北屯三層透天住宅"></label>
+      <label>業主<input type="text" id="mClient" placeholder="例：王先生"></label>
+      <label>地址<input type="text" id="mAddr" placeholder="例：台中市⋯"></label>
+      <label>備註<input type="text" id="mNote" placeholder="例：預算 100–200 萬，兩人居住，養貓"></label>
+    </div>
+    <div class="hact">
+      <button class="pri" id="mSave">儲存專案資訊</button>
+      <span class="hstat" id="mStatus">尚未儲存</span>
+    </div>
+  </section>
+
+  <section class="hbox">
+    <div class="hbt">空間總覽</div>
+    <div class="hrooms" id="hrooms"></div>
+  </section>
+
+  <section class="hbox">
+    <div class="hbt">資料庫</div>
+    <p class="hnote">本系統會自動將資料同步到雲端，並在這台裝置保留一份離線副本；網路短暫中斷時仍可繼續填寫，恢復連線後會自動補傳。<br>若需換裝置、換瀏覽器或交接給其他人，仍可使用「匯出備份」下載 JSON 檔，在另一台裝置以「匯入備份」還原。</p>
+    <div class="hact">
+      <span class="hstat" id="dbStat" style="margin-left:0">讀取中⋯</span>
+      <span style="flex:1"></span>
+      <button id="btnDbBackup">匯出備份</button>
+      <button id="btnDbClear">清除本機資料</button>
+    </div>
+    <p class="hnote" id="syncMiniStat" style="margin-top:10px">同步狀態：檢查中⋯</p>
+  </section>
+
+  <section class="hbox">
+    <div class="hbt">待確認事項</div>
+    <ol class="htodo">
+      <li>一樓兩樘門的實際尺寸須指認：大門 1.109×2.180 與陽台門 2.739×3.234，圖面暫以 0.90×2.11 表示。</li>
+      <li>一樓輪廓在量測檔中未閉合，已依九面牆長度校正，左牆殘差約 0.21 m，須補測左牆總長。</li>
+      <li>2F 與 3F 走道、樓梯間未實測，各空間尚無法拼合為完整樓層。</li>
+      <li>辦公室（R-302）未實測，格局沿用客房；樓高暫用 3.01 m，同層酒吧實測為 3.20 m。</li>
+      <li>客房（R-202）四面牆無開窗紀錄，採光條件待確認。</li>
+      <li>牆厚一律以 0.15 m 表現，為假設值。</li>
+    </ol>
+  </section>
+
+</div>
+</div>
+
+<div id="view3d" class="panel">
+<div id="app">
+
+  <aside id="side">
+    <div class="head">
+      <h1>透天住宅・3D 室內預覽</h1>
+      <div class="sub">實測量體與配置提案・單位公尺・牆厚 0.15 為假設值</div>
+    </div>
+
+    <div class="grp">
+      <div class="lbl">房間</div>
+      <div class="rooms" id="roomBtns"></div>
+    </div>
+
+    <div class="grp">
+      <div class="lbl">視角</div>
+      <div class="seg" id="modeSeg">
+        <button data-mode="orbit" aria-pressed="true">環繞</button>
+        <button data-mode="walk" aria-pressed="false">走進去看</button>
+      </div>
+      <div style="margin-top:10px">
+        <label class="tgl"><input type="checkbox" id="tFurn" checked> 顯示家具配置</label>
+        <label class="tgl"><input type="checkbox" id="tCeil"> 顯示天花板</label>
+        <label class="tgl"><input type="checkbox" id="tLabel" checked> 顯示開口編號</label>
+        <label class="tgl"><input type="checkbox" id="tHuman" checked> 顯示 1.70 m 人形比例</label>
+        <label class="tgl"><input type="checkbox" id="tGrid" checked> 顯示 1 m 地板格線</label>
+      </div>
+    </div>
+
+    <div class="grp" id="info"></div>
+
+    <div class="foot">
+      牆厚一律以 0.15 m 表現，為假設值。紅色開口為 MeasureOn 概值待複核，藍色為現場實測值。
+      各空間尚未拼合為完整樓層，因 2F／3F 走道與樓梯間尚未實測。家具為配置提案量體，尺寸可調整，非最終選品。
+    </div>
+  </aside>
+
+  <div id="stage">
+    <button id="sideToggle">面板</button>
+    <div id="scalebadge">1 格 = 1 m</div>
+    <div id="hint"></div>
+    <div id="pad">
+      <span></span><button data-k="f">▲</button><span></span>
+      <button data-k="l">◀</button><button data-k="b">▼</button><button data-k="r">▶</button>
+    </div>
+    <div id="loading">載入 3D 模型…</div>
+  </div>
+
+</div>
+</div>
+
+<div id="viewzone" class="panel">
+<div class="sheet">
+
+<header class="tb">
+  <div>
+    <h1>空間分區規劃表</h1>
+    <div class="sub">27 個分區・家具庫 109 項・材質庫 83 項・色盤 56 色・支援自訂項目</div>
+  </div>
+  <div class="mono" style="font-size:12px;color:#7c828c">Z-100 v1 ／ 2026-08-28</div>
+</header>
+
+<div class="how">
+  本表分區<b>完整涵蓋 100% 樓板面積</b>，無遺漏區塊。各區已標註實際可用尺寸與既有條件（淨高、鄰近門窗、須迴避事項）。不施作的區塊勾選「併為走道」，該區將轉為灰階並於匯出時單獨列計。填寫完成後可<b>匯出</b>為文件或<b>複製全部</b>，作為設計變更與估價的依據。
+</div>
+
+<div class="plans">
+  <div class="plans-head">
+    <span class="ptitle">方案管理</span>
+    <button id="btnNew">＋ 新增方案</button>
+    <button id="btnBackup">匯出備份</button>
+    <button id="btnImport">匯入備份</button>
+    <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
+  </div>
+  <div id="storeWarn" class="pwarn" style="display:none"></div>
+  <div class="pmeta">
+    <label>檔名 <input type="text" id="planName" placeholder="例：一樓客廳配置 A 案"></label>
+    <label>填表人 <input type="text" id="planAuthor" placeholder="例：李小姐"></label>
+  </div>
+  <div class="ptable-wrap">
+    <table class="ptable" id="planList">
+      <thead><tr><th>檔名</th><th>填表人</th><th>最後儲存</th><th>已填分區</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bar">
+  <button class="pri" id="btnSave">儲存</button>
+  <button id="btnSaveAs">另存新檔</button>
+  <button id="btnExport">匯出文字</button>
+  <button id="btnCopy">複製全部</button>
+  <button id="btnClear">清空欄位</button>
+  <span class="status" id="status">尚未儲存</span>
+</div>
+<textarea id="out" readonly></textarea>
+
+<div id="rooms"></div>
+
+<div class="foot">
+  分區依據 MeasureOn 實測幾何切分，面積為概略可用範圍，非精確樓板面積。
+  牆厚 0.15 為假設值。配色欄位的色票只是概念方向，實際仍需看實體色卡。
+</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+if(!window.THREE){
+  var ld = document.getElementById("loading");
+  if(ld) ld.textContent = "無法載入 3D 函式庫（需要網路連線）。分區規劃表仍可正常使用。";
+  return;
+}
+
+/* ================= 實測資料（單位：公尺，平面座標 x 右、y 上） ================= */
+var WT = 0.15; // 假設牆厚
+var ROOMS = [
+{id:"R-101",floor:"1F",name:"玄關／客廳／餐廚",full:"一樓　玄關・客廳・餐廚",h:3.60,area:48.87,ping:14.78,
+ poly:[[0,6.68],[2.26,6.68],[2.26,0],[5.84,0],[5.84,11.24],[0,11.24]],
+ stub:[[0,7.81],[3.16,7.81],[3.16,8.34],[0,8.34]],
+ note:"大門位於南段（D-102），南段 3.58×6.68 為客廳，北段 5.84×4.56 為餐廚，陽台門 D-101 通往後陽台。輪廓於量測檔中未閉合，已依九面牆長度校正，左牆殘差約 0.21 m。",
+ op:[
+  {tag:"W-101",kind:"win",  p1:[1.14,11.24],p2:[2.14,11.24],w:1.000,ht:1.000,sill:1.30,src:"Bosch"},
+  {tag:"D-101",kind:"door", p1:[2.89,11.24],p2:[3.79,11.24],w:0.900,ht:2.110,sill:0.00,src:"Bosch",chk:"預設值。實際為大門 1.109×2.180 或陽台門 2.739×3.234，待指認"},
+  {tag:"D-102",kind:"door", p1:[4.63,0.00], p2:[5.53,0.00], w:0.900,ht:2.110,sill:0.00,src:"Bosch",chk:"預設值。實際為大門 1.109×2.180 或陽台門 2.739×3.234，待指認"},
+  {tag:"W-102",kind:"win",  p1:[2.26,0.99], p2:[2.26,1.99], w:1.000,ht:1.000,sill:1.30,src:"Bosch"}
+ ]},
+{id:"R-201",floor:"2F",name:"主臥室",full:"主臥室",h:3.43,area:18.57,ping:5.62,
+ poly:[[0,1.66],[2.26,1.66],[2.26,0],[3.56,0],[3.56,6.27],[0,6.27]],stub:null,
+ note:"牆體 7（0.16 m）為左下角小凹凸，已併入輪廓。面積對比 MeasureOn 誤差約 1.8%。",
+ op:[
+  {tag:"W-201",kind:"win",  p1:[0.23,6.27], p2:[1.23,6.27],w:1.000,ht:1.000,sill:1.21,src:"Bosch"},
+  {tag:"W-202",kind:"slide",p1:[1.526,6.27],p2:[3.56,6.27],w:2.034,ht:2.500,sill:0.00,src:"現場實測",chk:"落地窗，平移開，貼右牆"},
+  {tag:"D-201",kind:"door", p1:[2.62,0.00], p2:[3.45,0.00],w:0.830,ht:2.002,sill:0.00,src:"現場實測",chk:"主臥門，距左 0.36"}
+ ]},
+{id:"R-202",floor:"2F",name:"客房",full:"客房",h:3.01,area:17.84,ping:5.40,
+ poly:[[0,0],[3.05,0],[3.05,5.85],[0,5.85]],stub:null,
+ note:"辦公室與客房同格局，僅少一樘廁所門。四面牆均無開窗紀錄，需現場確認。",
+ op:[
+  {tag:"D-202",kind:"door",p1:[3.05,3.39],p2:[3.05,4.29],w:0.900,ht:2.110,sill:0.00,src:"Bosch",chk:"房門，距北牆 1.56"},
+  {tag:"D-203",kind:"door",p1:[3.05,2.39],p2:[3.05,3.29],w:0.900,ht:2.110,sill:0.00,src:"Bosch",chk:"廁所門，辦公室無此門"}
+ ]},
+{id:"R-301",floor:"3F",name:"頂樓酒吧",full:"頂樓酒吧",h:3.20,area:13.08,ping:3.96,
+ poly:[[0,0],[1.17,0],[1.17,2.14],[2.85,2.14],[2.85,5.85],[0,5.85]],stub:null,
+ note:"閉合良好，可直接建模。",
+ op:[
+  {tag:"D-301",kind:"door", p1:[0.00,1.89],p2:[0.00,2.79],w:0.900,ht:2.110,sill:0.00,src:"Bosch"},
+  {tag:"W-301",kind:"slide",p1:[2.85,2.57],p2:[2.85,4.789],w:2.219,ht:2.400,sill:0.00,src:"現場實測",chk:"落地窗，距南端 0.43、北端 1.06"}
+ ]},
+{id:"R-302",floor:"3F",name:"辦公室",full:"辦公室（客房同格局，少廁所門）",h:3.01,area:17.84,ping:5.40,
+ poly:[[0,0],[3.05,0],[3.05,5.85],[0,5.85]],stub:null,
+ note:"位於三樓，未實測。依現場回報「與客房格局相同、僅少一樘廁所門」推定。樓高沿用客房 3.01，惟同層酒吧實測 3.20，本室樓高與尺寸須現場複核。",
+ op:[
+  {tag:"D-302",kind:"door",p1:[3.05,3.39],p2:[3.05,4.29],w:0.900,ht:2.110,sill:0.00,src:"推定",chk:"房門，位置沿用客房 D-202"}
+ ]}
+];
+
+/* ================= 家具配置（兩人世界・現代簡約・預算 100–200 萬） ================= */
+/* x/y = 平面座標範圍，z = 離地高度範圍，單位公尺 */
+var FURN = {
+"R-101":[
+ {t:"case",n:"玄關鞋櫃 1.30×0.40 H2.10",x:[5.44,5.84],y:[0.20,1.50],z:[0,2.10]},
+ {t:"soft",n:"沙發 1.80×0.90",x:[2.26,3.16],y:[2.60,4.40],z:[0,0.78]},
+ {t:"hard",n:"茶几 1.20×0.60",x:[3.50,4.10],y:[2.90,4.10],z:[0.32,0.40]},
+ {t:"soft",n:"地毯 2.10×2.10",x:[2.90,5.00],y:[2.50,4.60],z:[0,0.02]},
+ {t:"case",n:"電視櫃 2.00×0.40 H0.45",x:[5.44,5.84],y:[2.50,4.50],z:[0,0.45]},
+ {t:"appl",n:"壁掛電視（視距 2.28 m）",x:[5.79,5.84],y:[2.90,4.10],z:[0.75,1.60]},
+ {t:"soft",n:"單椅",x:[4.60,5.20],y:[5.20,5.80],z:[0,0.75]},
+ {t:"soft",n:"寵物窩",x:[3.20,3.75],y:[5.20,5.75],z:[0,0.18]},
+ {t:"case",n:"貓牆 層板 ×4（H1.10／1.55／2.00／2.45）",x:[2.26,2.54],y:[4.70,5.15],z:[1.08,1.12]},
+ {t:"case",n:"",x:[2.26,2.54],y:[5.40,5.85],z:[1.53,1.57]},
+ {t:"case",n:"",x:[2.26,2.54],y:[4.85,5.30],z:[1.98,2.02]},
+ {t:"case",n:"",x:[2.26,2.54],y:[5.55,6.00],z:[2.43,2.47]},
+ {t:"case",n:"貓窩箱 0.50×0.35",x:[2.26,2.61],y:[6.10,6.60],z:[2.10,2.50]},
+ {t:"case",n:"貓吊橋 1.00",x:[2.26,2.48],y:[5.30,6.30],z:[2.53,2.57]},
+ {t:"case",n:"抓柱 H1.30",x:[2.26,2.41],y:[4.40,4.60],z:[0,1.30]},
+ {t:"case",n:"儲藏收納量體 3.16×1.66 H3.60（含既有隔間）",x:[0,3.16],y:[6.68,8.34],z:[0,3.60]},
+ {t:"hard",n:"一字型廚具 2.80×0.60 H0.90",x:[5.24,5.84],y:[8.34,11.14],z:[0,0.90]},
+ {t:"case",n:"廚房吊櫃 2.00×0.35",x:[5.49,5.84],y:[8.60,10.60],z:[1.50,2.30]},
+ {t:"appl",n:"冰箱＋電器高櫃 1.34×0.70 H2.20",x:[3.90,5.24],y:[10.54,11.24],z:[0,2.20]},
+ {t:"hard",n:"餐桌 0.90×1.60",x:[2.40,3.30],y:[8.70,10.30],z:[0.70,0.75]},
+ {t:"hard",n:"",x:[2.65,3.05],y:[8.90,10.10],z:[0,0.70]},
+ {t:"soft",n:"餐椅 ×4",x:[1.85,2.30],y:[8.90,9.35],z:[0,0.45]},
+ {t:"soft",n:"",x:[1.85,2.30],y:[9.65,10.10],z:[0,0.45]},
+ {t:"soft",n:"",x:[3.40,3.85],y:[8.90,9.35],z:[0,0.45]},
+ {t:"soft",n:"",x:[3.40,3.85],y:[9.65,10.10],z:[0,0.45]}
+],
+"R-201":[
+ {t:"soft",n:"雙人床 1.52×1.88",x:[0,1.88],y:[3.10,4.62],z:[0,0.50]},
+ {t:"case",n:"床頭櫃 0.40×0.40",x:[0,0.40],y:[4.75,5.15],z:[0,0.55]},
+ {t:"case",n:"衣櫃 2.94×0.60 H2.40",x:[2.96,3.56],y:[1.66,4.60],z:[0,2.40]},
+ {t:"case",n:"上掀收納櫃 H2.42–3.43",x:[2.96,3.56],y:[1.66,4.60],z:[2.42,3.43]},
+ {t:"hard",n:"化妝台 1.10×0.50（靠窗採光）",x:[3.06,3.56],y:[4.75,5.85],z:[0.68,0.75]},
+ {t:"hard",n:"",x:[3.06,3.56],y:[4.75,4.87],z:[0,0.68]},
+ {t:"soft",n:"化妝椅",x:[2.55,2.95],y:[5.10,5.50],z:[0,0.45]}
+],
+"R-202":[],
+"R-302":[
+ {t:"hard",n:"書桌 1.60×0.70",x:[0.20,1.80],y:[5.15,5.85],z:[0.70,0.75]},
+ {t:"hard",n:"",x:[0.30,0.70],y:[5.25,5.75],z:[0,0.70]},
+ {t:"soft",n:"人體工學椅",x:[0.75,1.25],y:[4.50,5.00],z:[0,0.50]},
+ {t:"case",n:"書櫃 3.50×0.35 H2.20",x:[0,0.35],y:[1.00,4.50],z:[0,2.20]},
+ {t:"case",n:"矮收納櫃 2.00×0.45 H0.85",x:[0.50,2.50],y:[0,0.45],z:[0,0.85]},
+ {t:"soft",n:"單椅",x:[2.20,2.85],y:[1.00,1.65],z:[0,0.75]},
+ {t:"hard",n:"邊几",x:[2.30,2.70],y:[1.80,2.20],z:[0,0.45]},
+ {t:"soft",n:"地毯 2.00×1.60",x:[0.55,2.55],y:[2.60,4.20],z:[0,0.02]}
+],
+"R-301":[
+ {t:"hard",n:"高吧桌 2.00×0.90 H1.05（置中）",x:[0.95,1.85],y:[2.90,4.90],z:[0.98,1.05]},
+ {t:"hard",n:"",x:[1.15,1.65],y:[3.10,4.70],z:[0,0.98]},
+ {t:"soft",n:"高腳椅 ×3",x:[1.95,2.40],y:[3.20,3.65],z:[0,0.75]},
+ {t:"soft",n:"",x:[1.95,2.40],y:[4.15,4.60],z:[0,0.75]},
+ {t:"soft",n:"",x:[1.18,1.63],y:[2.30,2.75],z:[0,0.75]},
+ {t:"case",n:"邊櫃 1.70×0.40 H0.85",x:[0,0.40],y:[3.80,5.50],z:[0,0.85]},
+ {t:"case",n:"酒櫃檯 1.50×0.40 H0.90",x:[0.90,2.40],y:[5.45,5.85],z:[0,0.90]},
+ {t:"case",n:"壁掛酒架＋杯架 1.10",x:[1.10,2.20],y:[5.65,5.85],z:[1.50,1.90]},
+ {t:"appl",n:"小冰箱 0.60×0.65 H0.90",x:[0.15,0.75],y:[0.30,0.95],z:[0,0.90]},
+ {t:"case",n:"酒櫃（高）0.45×0.70 H1.90",x:[0.15,0.60],y:[1.05,1.75],z:[0,1.90]},
+ {t:"soft",n:"地毯 1.90×2.60",x:[0.55,2.45],y:[2.50,5.10],z:[0,0.02]}
+]};
+
+/* ================= 場景 ================= */
+var stage = document.getElementById("stage");
+var scene, camera, renderer, modelGroup, ceilGroup, labelGroup, humanGroup, gridGroup, furnGroup;
+var current = ROOMS[0];
+var mode = "orbit";
+var orbit = {target:new THREE.Vector3(), r:16, theta:Math.PI*0.78, phi:Math.PI*0.32};
+var walk  = {pos:new THREE.Vector3(), yaw:0, pitch:0, eye:1.60};
+var keys = Object.create(null);
+var clock;
+
+function init(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xeef0ec);
+  scene.fog = new THREE.Fog(0xeef0ec, 40, 110);
+
+  camera = new THREE.PerspectiveCamera(52, 1, 0.05, 400);
+
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa0a6, 0.85));
+  var sun = new THREE.DirectionalLight(0xfff6e8, 0.85);
+  sun.position.set(9, 16, 7);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024,1024);
+  sun.shadow.camera.left=-16; sun.shadow.camera.right=16;
+  sun.shadow.camera.top=16; sun.shadow.camera.bottom=-16;
+  sun.shadow.camera.far = 60;
+  scene.add(sun);
+  var fill = new THREE.DirectionalLight(0xffffff, 0.28);
+  fill.position.set(-8, 7, -9);
+  scene.add(fill);
+
+  clock = new THREE.Clock();
+  buildUI();
+  loadRoom(ROOMS[0]);
+  bindControls();
+  resize();
+  window.addEventListener("resize", resize);
+  window.__resize3d = resize;
+  window.__selectRoom = function(id){
+    for(var i=0;i<ROOMS.length;i++) if(ROOMS[i].id === id){ loadRoom(ROOMS[i]); return; }
+  };
+  document.getElementById("loading").style.display = "none";
+  animate();
+}
+
+function resize(){
+  var w = stage.clientWidth, h = stage.clientHeight;
+  if(!w || !h) return;
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+
+/* ================= 幾何 ================= */
+var MAT = {
+  wall:   new THREE.MeshLambertMaterial({color:0xe9e6e0, side:THREE.DoubleSide}),
+  wallIn: new THREE.MeshLambertMaterial({color:0xf4f2ee, side:THREE.DoubleSide}),
+  floor:  new THREE.MeshLambertMaterial({color:0xcdc6bb, side:THREE.DoubleSide}),
+  ceil:   new THREE.MeshLambertMaterial({color:0xf7f6f3, side:THREE.DoubleSide, transparent:true, opacity:0.96}),
+  stub:   new THREE.MeshLambertMaterial({color:0xdedad2}),
+  glass:  new THREE.MeshLambertMaterial({color:0x8fc2e6, transparent:true, opacity:0.30, side:THREE.DoubleSide}),
+  human:  new THREE.MeshLambertMaterial({color:0x2f6fb5}),
+  fCase:  new THREE.MeshLambertMaterial({color:0xc3a179}),
+  fSoft:  new THREE.MeshLambertMaterial({color:0x93a0ad}),
+  fHard:  new THREE.MeshLambertMaterial({color:0xb8b2a6}),
+  fAppl:  new THREE.MeshLambertMaterial({color:0x7a8188})
+};
+function edgeMat(c){ return new THREE.LineBasicMaterial({color:c}); }
+
+function P3(p, dy){ return new THREE.Vector3(p[0], dy||0, -p[1]); }
+
+function shapeFromPoly(poly, holes){
+  var s = new THREE.Shape();
+  s.moveTo(poly[0][0], poly[0][1]);
+  for(var i=1;i<poly.length;i++) s.lineTo(poly[i][0], poly[i][1]);
+  s.closePath();
+  if(holes) holes.forEach(function(hp){
+    var p = new THREE.Path();
+    p.moveTo(hp[0][0], hp[0][1]);
+    for(var j=1;j<hp.length;j++) p.lineTo(hp[j][0], hp[j][1]);
+    p.closePath();
+    s.holes.push(p);
+  });
+  return s;
+}
+
+/* 找出屬於某道牆的開口 */
+function opsOnEdge(room, A, B){
+  var dx=B[0]-A[0], dy=B[1]-A[1], L=Math.hypot(dx,dy), ux=dx/L, uy=dy/L;
+  var out=[];
+  room.op.forEach(function(o){
+    var ok = [o.p1,o.p2].every(function(P){
+      var vx=P[0]-A[0], vy=P[1]-A[1];
+      var cross = Math.abs(vx*uy - vy*ux);
+      var u = vx*ux + vy*uy;
+      return cross < 0.02 && u > -0.02 && u < L+0.02;
+    });
+    if(ok){
+      var u1=(o.p1[0]-A[0])*ux+(o.p1[1]-A[1])*uy;
+      var u2=(o.p2[0]-A[0])*ux+(o.p2[1]-A[1])*uy;
+      out.push({o:o, u1:Math.min(u1,u2), u2:Math.max(u1,u2)});
+    }
+  });
+  return out;
+}
+
+function wallBasis(A,B){
+  var dx=B[0]-A[0], dy=B[1]-A[1], L=Math.hypot(dx,dy);
+  var ux=dx/L, uy=dy/L;
+  var nx=uy, ny=-ux;                    // CCW 多邊形的向外法線
+  var m = new THREE.Matrix4();
+  m.makeBasis(new THREE.Vector3(ux,0,-uy), new THREE.Vector3(0,1,0), new THREE.Vector3(nx,0,-ny));
+  m.setPosition(A[0], 0, -A[1]);
+  return {m:m, L:L, ux:ux, uy:uy, nx:nx, ny:ny};
+}
+
+function buildRoom(room){
+  var g = new THREE.Group();
+  ceilGroup = new THREE.Group();
+  labelGroup = new THREE.Group();
+  var poly = room.poly;
+
+  /* 地板（含隔間挖孔） */
+  var fShape = shapeFromPoly(poly, null); // 隔間以實體量體表示，不在樓板挖孔
+  var fGeo = new THREE.ShapeGeometry(fShape);
+  fGeo.rotateX(-Math.PI/2);
+  var floor = new THREE.Mesh(fGeo, MAT.floor);
+  floor.receiveShadow = true;
+  g.add(floor);
+
+  /* 天花板 */
+  var cGeo = new THREE.ShapeGeometry(fShape);
+  cGeo.rotateX(-Math.PI/2);
+  cGeo.translate(0, room.h, 0);
+  ceilGroup.add(new THREE.Mesh(cGeo, MAT.ceil));
+  ceilGroup.visible = false;
+  g.add(ceilGroup);
+
+  /* 牆體 */
+  for(var i=0;i<poly.length;i++){
+    var A = poly[i], B = poly[(i+1)%poly.length];
+    var bs = wallBasis(A,B);
+    var sh = new THREE.Shape();
+    sh.moveTo(0,0); sh.lineTo(bs.L,0); sh.lineTo(bs.L,room.h); sh.lineTo(0,room.h); sh.closePath();
+
+    var list = opsOnEdge(room, A, B);
+    list.forEach(function(e){
+      var top = Math.min(e.o.sill + e.o.ht, room.h - 0.02);
+      var p = new THREE.Path();
+      p.moveTo(e.u1, e.o.sill); p.lineTo(e.u2, e.o.sill);
+      p.lineTo(e.u2, top);      p.lineTo(e.u1, top);
+      p.closePath();
+      sh.holes.push(p);
+    });
+
+    var geo = new THREE.ExtrudeGeometry(sh, {depth:WT, bevelEnabled:false});
+    var mesh = new THREE.Mesh(geo, MAT.wall);
+    mesh.applyMatrix4(bs.m);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    g.add(mesh);
+
+    /* 玻璃、開口框線、標籤 */
+    list.forEach(function(e){
+      var o = e.o;
+      var uc = (e.u1 + e.u2)/2;
+      var top = Math.min(o.sill + o.ht, room.h - 0.02);
+      var hh = top - o.sill;
+      var col = (o.src === "Bosch") ? 0xc8442b : 0x2f6fb5;
+
+      if(o.kind !== "door"){
+        var pane = new THREE.Mesh(new THREE.PlaneGeometry(e.u2-e.u1, hh), MAT.glass);
+        pane.applyMatrix4(bs.m);
+        pane.position.add(new THREE.Vector3(bs.ux*uc, o.sill + hh/2, -bs.uy*uc))
+                     .add(new THREE.Vector3(bs.nx*WT/2, 0, -bs.ny*WT/2));
+        g.add(pane);
+      }
+      var frame = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(e.u2-e.u1, hh, WT*1.02)), edgeMat(col));
+      frame.applyMatrix4(bs.m);
+      frame.position.add(new THREE.Vector3(bs.ux*uc, o.sill + hh/2, -bs.uy*uc))
+                    .add(new THREE.Vector3(bs.nx*WT/2, 0, -bs.ny*WT/2));
+      g.add(frame);
+
+      var lab = makeLabel(o.tag + "  " + o.w.toFixed(3) + "×" + o.ht.toFixed(3), col);
+      lab.position.set(A[0] + bs.ux*uc - bs.nx*0.45, top + 0.32, -(A[1] + bs.uy*uc - bs.ny*0.45));
+      labelGroup.add(lab);
+    });
+  }
+
+  /* 室內隔間（1F） */
+  if(room.stub){
+    var sp = room.stub;
+    var w = Math.abs(sp[1][0]-sp[0][0]), d = Math.abs(sp[2][1]-sp[1][1]);
+    var cx = (sp[0][0]+sp[2][0])/2, cy = (sp[0][1]+sp[2][1])/2;
+    var box = new THREE.Mesh(new THREE.BoxGeometry(w, room.h, d), MAT.stub);
+    box.position.set(cx, room.h/2, -cy);
+    box.castShadow = true; box.receiveShadow = true;
+    g.add(box);
+  }
+
+  /* 家具配置 */
+  furnGroup = new THREE.Group();
+  var FMAT = {case:MAT.fCase, soft:MAT.fSoft, hard:MAT.fHard, appl:MAT.fAppl};
+  (FURN[room.id] || []).forEach(function(f){
+    var w = f.x[1]-f.x[0], d = f.y[1]-f.y[0], hh = f.z[1]-f.z[0];
+    var b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), FMAT[f.t] || MAT.fHard);
+    b.position.set((f.x[0]+f.x[1])/2, (f.z[0]+f.z[1])/2, -(f.y[0]+f.y[1])/2);
+    b.castShadow = true; b.receiveShadow = true;
+    furnGroup.add(b);
+    var eg = new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry),
+             new THREE.LineBasicMaterial({color:0x5c6169, transparent:true, opacity:0.5}));
+    eg.position.copy(b.position);
+    furnGroup.add(eg);
+  });
+  g.add(furnGroup);
+
+  /* 地板格線 */
+  gridGroup = new THREE.Group();
+  var xs=poly.map(function(p){return p[0];}), ys=poly.map(function(p){return p[1];});
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+  var gm = new THREE.LineBasicMaterial({color:0x9aa0a6, transparent:true, opacity:0.45});
+  var pts=[];
+  for(var gx=Math.ceil(x0); gx<=x1; gx++){ pts.push(new THREE.Vector3(gx,0.005,-y0), new THREE.Vector3(gx,0.005,-y1)); }
+  for(var gy=Math.ceil(y0); gy<=y1; gy++){ pts.push(new THREE.Vector3(x0,0.005,-gy), new THREE.Vector3(x1,0.005,-gy)); }
+  var gg = new THREE.BufferGeometry().setFromPoints(pts);
+  gridGroup.add(new THREE.LineSegments(gg, gm));
+  g.add(gridGroup);
+
+  /* 1.70 m 人形 */
+  humanGroup = new THREE.Group();
+  var body = new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.20,1.42,16), MAT.human);
+  body.position.y = 0.71;
+  var head = new THREE.Mesh(new THREE.SphereGeometry(0.13,16,12), MAT.human);
+  head.position.y = 1.55;
+  humanGroup.add(body); humanGroup.add(head);
+  var cx2 = (x0+x1)/2, cy2 = (y0+y1)/2;
+  humanGroup.position.set(cx2, 0, -cy2);
+  humanGroup.castShadow = true;
+  g.add(humanGroup);
+
+  g.add(labelGroup);
+  g.userData.bbox = {x0:x0,x1:x1,y0:y0,y1:y1};
+  return g;
+}
+
+/* 文字標籤（canvas 貼圖） */
+function makeLabel(text, color){
+  var c = document.createElement("canvas");
+  c.width = 512; c.height = 96;
+  var x = c.getContext("2d");
+  x.fillStyle = "rgba(251,251,249,0.92)";
+  x.fillRect(0,0,512,96);
+  x.strokeStyle = "#" + color.toString(16).padStart(6,"0");
+  x.lineWidth = 6; x.strokeRect(3,3,506,90);
+  x.fillStyle = "#" + color.toString(16).padStart(6,"0");
+  x.font = "600 46px ui-monospace, Menlo, monospace";
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText(text, 256, 52);
+  var tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.LinearFilter;
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false}));
+  sp.scale.set(1.5, 0.28, 1);
+  return sp;
+}
+
+function loadRoom(room){
+  current = room;
+  if(modelGroup){ scene.remove(modelGroup); disposeGroup(modelGroup); }
+  modelGroup = buildRoom(room);
+  scene.add(modelGroup);
+
+  var bb = modelGroup.userData.bbox;
+  var cx = (bb.x0+bb.x1)/2, cy = (bb.y0+bb.y1)/2;
+  var span = Math.max(bb.x1-bb.x0, bb.y1-bb.y0);
+  orbit.target.set(cx, room.h*0.42, -cy);
+  orbit.r = span*1.5 + 5;
+  orbit.theta = Math.PI*0.78; orbit.phi = Math.PI*0.34;
+  walk.pos.set(cx, walk.eye, -cy);
+  walk.yaw = Math.PI; walk.pitch = 0;
+
+  applyToggles();
+  renderInfo(room);
+  if(window.__onRoomChange) window.__onRoomChange(room.id);
+  document.querySelectorAll("button.room").forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.id === room.id));
+  });
+}
+
+function disposeGroup(g){
+  g.traverse(function(o){
+    if(o.geometry) o.geometry.dispose();
+    if(o.material && o.material.map) o.material.map.dispose();
+  });
+}
+
+/* ================= UI ================= */
+function buildUI(){
+  var wrap = document.getElementById("roomBtns");
+  ROOMS.forEach(function(r){
+    var b = document.createElement("button");
+    b.className = "room"; b.dataset.id = r.id;
+    b.setAttribute("aria-pressed", String(r === ROOMS[0]));
+    b.innerHTML = '<span class="fl">'+r.floor+'</span><span class="nm">'+r.name+
+                  '</span><span class="sz">'+r.area.toFixed(1)+' ㎡</span>';
+    b.addEventListener("click", function(){ loadRoom(r); });
+    wrap.appendChild(b);
+  });
+
+  document.getElementById("modeSeg").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    setMode(b.dataset.mode);
+  });
+  ["tFurn","tCeil","tLabel","tHuman","tGrid"].forEach(function(id){
+    document.getElementById(id).addEventListener("change", applyToggles);
+  });
+  document.getElementById("sideToggle").addEventListener("click", function(){
+    document.body.classList.toggle("folded");
+    setTimeout(resize, 60);
+  });
+  updateHint();
+}
+
+function applyToggles(){
+  if(furnGroup)  furnGroup.visible  = document.getElementById("tFurn").checked;
+  if(ceilGroup)  ceilGroup.visible  = document.getElementById("tCeil").checked;
+  if(labelGroup) labelGroup.visible = document.getElementById("tLabel").checked;
+  if(humanGroup) humanGroup.visible = document.getElementById("tHuman").checked;
+  if(gridGroup)  gridGroup.visible  = document.getElementById("tGrid").checked;
+}
+
+function renderInfo(r){
+  var rows = r.op.map(function(o){
+    var col = (o.src === "Bosch") ? "#c8442b" : "#2f6fb5";
+    return '<tr><td class="t"><span class="dot" style="background:'+col+'"></span>'+o.tag+'</td>'+
+           '<td>'+o.w.toFixed(3)+'×'+o.ht.toFixed(3)+'</td>'+
+           '<td>'+(o.sill>0 ? "台"+o.sill.toFixed(2) : "落地")+'</td></tr>';
+  }).join("");
+  document.getElementById("info").innerHTML =
+    '<div class="lbl">'+r.floor+' ／ '+r.id+'</div>'+
+    '<div style="font-size:15px;font-weight:800;margin-bottom:8px">'+r.full+'</div>'+
+    '<dl class="st">'+
+      '<dt>樓板面積</dt><dd>'+r.area.toFixed(2)+' ㎡</dd>'+
+      '<dt>坪數</dt><dd>'+r.ping.toFixed(2)+' 坪</dd>'+
+      '<dt>樓高 CH</dt><dd>'+r.h.toFixed(2)+' m</dd>'+
+      '<dt>室內體積</dt><dd>'+(r.area*r.h).toFixed(1)+' ㎥</dd>'+
+    '</dl>'+
+    '<table class="ops"><tr><th>開口</th><th>寬×高</th><th>窗台</th></tr>'+rows+'</table>'+
+    furnHTML(r) +
+    '<div class="note">'+r.note+'</div>';
+}
+
+function furnHTML(r){
+  var list = (FURN[r.id] || []).filter(function(f){ return f.n; });
+  if(!list.length){
+    return '<div class="note" style="border-left-color:#c8442b">本階段未配置家具：四面牆無開窗紀錄，採光條件待確認。建議本階段僅施作水電與地坪，格局保留彈性。</div>';
+  }
+  return '<div class="lbl" style="margin-top:14px">家具配置</div><ul class="fl2">' +
+    list.map(function(f){
+      return '<li><span class="sw" style="background:'+
+        ({case:"#c3a179",soft:"#93a0ad",hard:"#b8b2a6",appl:"#7a8188"}[f.t])+'"></span>'+f.n+'</li>';
+    }).join("") + '</ul>';
+}
+
+function updateHint(){
+  document.getElementById("hint").textContent = (mode === "orbit")
+    ? "拖曳旋轉・滾輪或雙指縮放・右鍵拖曳平移"
+    : "拖曳看四周・WASD／方向鍵移動・Shift 加速・手機用右下方向鍵";
+}
+
+function setMode(m){
+  mode = m;
+  document.body.classList.toggle("walk", m === "walk");
+  document.querySelectorAll("#modeSeg button").forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.mode === m));
+  });
+  if(m === "walk"){
+    var bb = modelGroup.userData.bbox;
+    walk.pos.set((bb.x0+bb.x1)/2, walk.eye, -(bb.y0+bb.y1)/2);
+    walk.yaw = Math.PI; walk.pitch = 0;
+  }
+  updateHint();
+}
+
+/* ================= 操作 ================= */
+function bindControls(){
+  var el = renderer.domElement;
+  var drag = null, lastTouchDist = 0;
+
+  el.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+  el.addEventListener("pointerdown", function(e){
+    el.setPointerCapture(e.pointerId);
+    drag = {x:e.clientX, y:e.clientY, btn:e.button};
+  });
+  el.addEventListener("pointermove", function(e){
+    if(!drag) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.x = e.clientX; drag.y = e.clientY;
+    if(mode === "orbit"){
+      if(drag.btn === 2){
+        var pan = 0.0022 * orbit.r;
+        var right = new THREE.Vector3(Math.cos(orbit.theta), 0, -Math.sin(orbit.theta));
+        var fwd   = new THREE.Vector3(Math.sin(orbit.theta), 0, Math.cos(orbit.theta));
+        orbit.target.addScaledVector(right, -dx*pan).addScaledVector(fwd, -dy*pan);
+      }else{
+        orbit.theta -= dx*0.006;
+        orbit.phi = clamp(orbit.phi - dy*0.006, 0.06, Math.PI*0.495);
+      }
+    }else{
+      walk.yaw   -= dx*0.004;
+      walk.pitch = clamp(walk.pitch - dy*0.004, -1.2, 1.2);
+    }
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(t){
+    el.addEventListener(t, function(){ drag = null; });
+  });
+
+  el.addEventListener("wheel", function(e){
+    e.preventDefault();
+    if(mode === "orbit") orbit.r = clamp(orbit.r * (1 + Math.sign(e.deltaY)*0.11), 1.5, 80);
+  }, {passive:false});
+
+  el.addEventListener("touchmove", function(e){
+    if(e.touches.length === 2){
+      e.preventDefault();
+      var d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+                         e.touches[0].clientY-e.touches[1].clientY);
+      if(lastTouchDist && mode === "orbit"){
+        orbit.r = clamp(orbit.r * (lastTouchDist/d), 1.5, 80);
+      }
+      lastTouchDist = d;
+    }
+  }, {passive:false});
+  el.addEventListener("touchend", function(){ lastTouchDist = 0; });
+
+  window.addEventListener("keydown", function(e){
+    keys[e.key.toLowerCase()] = true;
+    if(["arrowup","arrowdown","arrowleft","arrowright"," "].indexOf(e.key.toLowerCase()) >= 0) e.preventDefault();
+  });
+  window.addEventListener("keyup", function(e){ keys[e.key.toLowerCase()] = false; });
+
+  document.querySelectorAll("#pad button").forEach(function(b){
+    var k = b.dataset.k;
+    var on  = function(e){ e.preventDefault(); keys["pad"+k] = true; };
+    var off = function(e){ e.preventDefault(); keys["pad"+k] = false; };
+    b.addEventListener("pointerdown", on);
+    b.addEventListener("pointerup", off);
+    b.addEventListener("pointerleave", off);
+    b.addEventListener("pointercancel", off);
+  });
+}
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+function updateWalk(dt){
+  var speed = (keys["shift"] ? 3.4 : 1.7) * dt;
+  var fwd = 0, side = 0;
+  if(keys["w"] || keys["arrowup"] || keys["padf"]) fwd += 1;
+  if(keys["s"] || keys["arrowdown"] || keys["padb"]) fwd -= 1;
+  if(keys["a"] || keys["arrowleft"] || keys["padl"]) side -= 1;
+  if(keys["d"] || keys["arrowright"] || keys["padr"]) side += 1;
+  if(!fwd && !side) return;
+  var dirX = -Math.sin(walk.yaw), dirZ = -Math.cos(walk.yaw);
+  var rgtX = -dirZ, rgtZ = dirX;
+  walk.pos.x += (dirX*fwd + rgtX*side) * speed;
+  walk.pos.z += (dirZ*fwd + rgtZ*side) * speed;
+  walk.pos.y = walk.eye;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = Math.min(clock.getDelta(), 0.05);
+
+  if(mode === "orbit"){
+    var s = Math.sin(orbit.phi);
+    camera.position.set(
+      orbit.target.x + orbit.r * s * Math.sin(orbit.theta),
+      orbit.target.y + orbit.r * Math.cos(orbit.phi),
+      orbit.target.z + orbit.r * s * Math.cos(orbit.theta)
+    );
+    camera.lookAt(orbit.target);
+  }else{
+    updateWalk(dt);
+    camera.position.copy(walk.pos);
+    var t = new THREE.Vector3(
+      walk.pos.x - Math.sin(walk.yaw)*Math.cos(walk.pitch),
+      walk.pos.y + Math.sin(walk.pitch),
+      walk.pos.z - Math.cos(walk.yaw)*Math.cos(walk.pitch)
+    );
+    camera.lookAt(t);
+  }
+  renderer.render(scene, camera);
+}
+
+if(window.THREE){ init(); }
+else{
+  document.getElementById("loading").textContent =
+    "無法載入 three.js（需要網路連線才能取得繪圖函式庫）。請連上網路後重新整理。";
+}
+})();
+</script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   正式版同步設定
+   正式部署時固定使用同站 API /api/data。
+   ============================================================ */
+var SHARE_URL = "/api/data";
+
+
+/* ================= 色盤 ================= */
+var PALETTE = [
+ {g:"中性基底", c:[["純白","#FFFFFF"],["米白","#F5F1E8"],["蛋殼白","#EFEAE0"],["亞麻","#E5DFD3"],
+   ["淺米","#DED5C6"],["燕麥","#D3C8B6"],["米灰","#C9C2B6"],["暖灰","#B8B2A6"],
+   ["中灰","#9A958C"],["石灰","#857F76"]]},
+ {g:"木質", c:[["白橡","#D9C4A3"],["淺橡","#C8AC80"],["楓木","#C9A87C"],["檜木","#C99B6A"],
+   ["柚木","#B08A5A"],["梧桐","#A88C6B"],["竹編","#C4A96E"],["胡桃","#7B5637"],
+   ["深胡桃","#5E4028"],["炭燒木","#4A3B30"]]},
+ {g:"大地暖色", c:[["沙棕","#C0A184"],["焦糖","#A9713F"],["磚橘","#C4703F"],["陶土","#B5654A"],
+   ["磚紅","#A54B34"],["赭紅","#8C4033"],["鏽紅","#8A4B2F"],["暗紅","#6E2F26"],
+   ["芥黃","#C29A3A"],["玫瑰棕","#A97C74"]]},
+ {g:"冷色藍綠", c:[["青瓷","#B7CCC4"],["霧藍","#A8B8C4"],["鼠尾草綠","#9BAA92"],["湖水綠","#7FA9A2"],
+   ["灰藍","#7C93A6"],["橄欖綠","#6E7A55"],["靛藍","#2F5D80"],["深藍","#24405C"],
+   ["墨綠","#2F4739"],["海軍藍","#1C2E44"]]},
+ {g:"深色", c:[["水泥灰","#8C8C88"],["墨灰","#565B61"],["石墨灰","#4A4F55"],["鐵灰","#3A3E44"],
+   ["深棕黑","#33291F"],["炭黑","#26292E"],["霧黑","#2E3134"],["純黑","#14181F"]]},
+ {g:"金屬點綴", c:[["鍍鉻","#CBD0D4"],["不鏽鋼","#A9AEB2"],["香檳金","#C9B383"],["黃銅","#B8955A"],
+   ["古銅","#8C6A3F"],["玫瑰金","#C69C8C"],["鍍鈦黑","#3B3B3F"],["霧黑五金","#2B2B2B"]]}
+];
+
+/* ================= 材質庫 ================= */
+var MATERIALS = [
+ {g:"牆面", c:["微水泥","仿清水模塗料","藝術塗料","乳膠漆","珪藻土","文化石","板岩磚","地鐵磚",
+   "木格柵","木皮板","造型線板","進口壁紙","玻璃磚","鏡面","沖孔板"]},
+ {g:"地板", c:["SPC 石塑地板","超耐磨木地板","實木地板","木紋磚","拋光石英磚","啞光石英磚",
+   "復古花磚","大理石","水磨石","環氧樹脂","地毯","架高木地板"]},
+ {g:"櫃體木作", c:["系統櫃（美耐板）","木芯板＋木皮","實木","鋼刷木紋","烤漆門片","藤編門片",
+   "玻璃門片","沖孔鐵板","鐵件層架","開放層架","隱藏門片","百葉門片"]},
+ {g:"檯面", c:["人造石","石英石","賽麗石","岩板","天然大理石","不鏽鋼","實木檯面","美耐板"]},
+ {g:"天花燈光", c:["平釘天花","造型降板","間接照明燈溝","軌道燈","嵌燈","吊燈","壁燈","線形燈",
+   "洗牆燈","磁吸軌道","感應燈","調光開關"]},
+ {g:"織品軟裝", c:["棉麻布","貓抓布","科技布","絨布","皮革","仿皮","遮光窗簾","紗簾",
+   "捲簾","蜂巢簾","百葉簾","抱枕布"]},
+ {g:"五金玻璃", c:["霧黑五金","黃銅五金","不鏽鋼五金","隱藏把手","緩衝鉸鏈","滑軌五金",
+   "玻璃隔間","鋁框拉門","長虹玻璃","清玻璃","茶玻","木質踢腳"]}
+];
+
+
+/* ================= 分區常用名稱 ================= */
+var ZONE_NAMES = [
+ {g:"生活區", c:["客廳","沙發區","電視牆","起居區","閱讀角","休憩區","遊戲區","寵物區","貓牆","展示牆"]},
+ {g:"餐廚", c:["餐廳","餐桌區","中島","吧台","廚具帶","電器帶","備餐區","冰箱區","水槽區","餐邊櫃"]},
+ {g:"睡寢", c:["睡眠區","床頭區","床尾走道","衣櫃帶","更衣區","化妝區","窗邊臥榻","嬰兒床區"]},
+ {g:"工作", c:["書桌區","工作核心","第二工作位","書櫃帶","收納牆","會客區","文件區"]},
+ {g:"機能", c:["玄關","落塵區","走道","主動線帶","過渡區","儲藏","儲藏量體","收納櫃體","洗衣區","後陽台","樓梯間","機房／電箱","衛浴前室"]},
+ {g:"開口採光", c:["採光帶","窗邊","落地窗前","陽台門動線","通風帶"]},
+ {g:"立面", c:["主牆立面","電視牆立面","衣櫃立面","酒櫃立面","貓牆立面","背景牆"]}
+];
+
+/* ================= 空間用途 ================= */
+var USES = [
+ {g:"公共空間", c:["玄關","客廳","餐廳","廚房","中島吧檯","起居間","視聽室","閱讀角","咖啡角","茶室"]},
+ {g:"私人空間", c:["主臥","次臥","客房","更衣室","書房","工作室","健身區","育兒區","佛堂","遊戲間"]},
+ {g:"機能空間", c:["衛浴","半套衛浴","儲藏室","收納牆","洗衣間","曬衣區","後陽台","走道","樓梯間","機房／電箱"]},
+ {g:"特殊用途", c:["吧台","品酒區","寵物空間","貓跳台區","工作陽台","收藏展示","客用接待","多功能彈性區"]}
+];
+
+/* ================= 家具擺設庫 ================= */
+var FURNLIB = [
+ {g:"客廳", c:["L 型沙發","三人沙發","雙人沙發","單椅","躺椅","腳凳","茶几","邊几",
+   "電視櫃","電視牆造型櫃","地毯","落地燈","書報架","懶骨頭","矮凳"]},
+ {g:"餐廚", c:["中島","餐桌","餐椅","長凳","高腳椅","餐邊櫃","一字型廚具","L 型廚具",
+   "電器高櫃","冰箱","烤箱／蒸爐","洗碗機","抽油煙機","吊櫃","開放層架","中島水槽","淨水設備"]},
+ {g:"臥室", c:["雙人床","加大床","床頭櫃","床頭板","衣櫃","開放式衣帽架","上掀收納櫃",
+   "化妝台","化妝椅","斗櫃","全身鏡","閱讀椅","小邊桌","窗邊臥榻"]},
+ {g:"收納機能", c:["頂天高櫃","儲藏櫃","走入式收納","鞋櫃","穿鞋椅","玄關掛衣區","端景櫃",
+   "書櫃","書桌","洗衣機櫃","電箱門片","層板收納","抽屜櫃"]},
+ {g:"吧台娛樂", c:["高吧桌","吧台檯面","酒櫃","紅酒冰箱","小冰箱","製冰機","杯架",
+   "壁掛酒架","投影幕","投影機","音響","霓虹燈飾","飛鏢靶","黑膠唱機"]},
+ {g:"寵物", c:["貓跳台層板","貓吊橋","貓窩箱","貓抓柱","貓跳階梯","貓砂櫃","貓道",
+   "寵物碗架","寵物床","寵物圍欄","寵物拉門","寵物洗澡區"]},
+ {g:"燈具設備", c:["主燈","嵌燈","軌道燈","壁燈","吊燈","間接照明","閱讀燈","吸頂扇",
+   "分離式冷氣","吊隱式冷氣","循環扇","除濕機","全熱交換器","浴室暖風機"]},
+ {g:"綠植裝飾", c:["大型落地盆栽","桌上綠植","乾燥花","掛畫","層板擺飾","鏡子",
+   "時鐘","香氛擴香","地墊","門口踏墊"]}
+];
+
+var ROOMS = [
+{id:"R-101",floor:"1F",name:"玄關 / 客廳 / 餐廚",h:3.60,
+ poly:[[0,6.68],[2.26,6.68],[2.26,0],[5.84,0],[5.84,11.24],[0,11.24]],
+ zones:[
+  {k:"A",n:"玄關",x:[2.26,5.84],y:[0,1.70],c:"#c8442b",
+   f:"3.58×1.70。大門 D-102 位於南牆（x 4.63–5.53），為進屋第一個空間。東牆可配置鞋櫃，落塵區建議 1.5 m 以上。"},
+  {k:"B",n:"沙發／貓牆帶（西）",x:[2.26,3.16],y:[1.70,6.68],c:"#8a6d3b",
+   f:"0.90×4.98。W-102 窗（窗台高 1.30）位於南段 y 0.99–1.99，沙發背牆不受影響。北段 2.0 m 無開口，可設貓牆，可用高度 3.60 m。"},
+  {k:"C",n:"客廳中央",x:[3.16,5.44],y:[1.70,6.68],c:"#c8442b",
+   f:"2.28×4.98。茶几、地毯與主要活動範圍，同時是玄關通往餐廚的動線。沙發至電視牆視距 2.28 m。"},
+  {k:"D",n:"電視牆帶（東立面）",x:[5.44,5.84],y:[1.70,6.68],c:"#14181f",
+   f:"東牆 6.68 m 全無開口，為全屋最完整立面。電視中心高建議 1.10–1.20 m，下方電視櫃深 0.40 m。"},
+  {k:"E",n:"儲藏量體",x:[0,3.16],y:[6.68,8.34],c:"#8a6d3b",
+   f:"3.16×1.66，含既有 0.53 m 隔間。深度不利於一般櫃體（易生死角），建議整體規劃為儲藏或走入式收納。"},
+  {k:"F",n:"客廳至餐廚過渡",x:[3.16,5.84],y:[6.68,8.34],c:"#7a8188",
+   f:"2.68×1.66。兩區之間的轉換節點，須維持通行；可設置矮櫃或端景。"},
+  {k:"G",n:"電器／冰箱帶（西）",x:[0,0.80],y:[8.34,11.24],c:"#2f6fb5",
+   f:"0.80×2.90。西牆此段無開口，可配置冰箱或電器高櫃；亦可改為餐邊櫃。"},
+  {k:"H",n:"餐桌區",x:[0.80,4.24],y:[8.34,10.30],c:"#2f6fb5",
+   f:"3.44×1.96。可容納 0.90×1.60 餐桌配四椅。W-101 窗（窗台高 1.30）位於北側上方。"},
+  {k:"I",n:"廚具帶（東）",x:[4.24,5.84],y:[8.34,11.24],c:"#2f6fb5",
+   f:"1.60×2.90。東牆 2.90 m 無開口，適合一字型廚具；北牆東段可接冰箱與電器高櫃，形成 L 型工作動線，且鄰近後陽台。"},
+  {k:"J",n:"後陽台動線帶",x:[0.80,4.24],y:[10.30,11.24],c:"#7a8188",
+   f:"3.44×0.94。陽台門 D-101（實測 2.739×3.234，位置待確認）通往後陽台，此帶須維持淨空。"}
+ ]},
+{id:"R-201",floor:"2F",name:"主臥室",h:3.43,
+ poly:[[0,1.66],[2.26,1.66],[2.26,0],[3.56,0],[3.56,6.27],[0,6.27]],
+ zones:[
+  {k:"A",n:"入口過道",x:[2.26,3.56],y:[0,1.66],c:"#7a8188",
+   f:"1.30×1.66。主臥門 D-201（0.83×2.002）位於南牆，門扇迴轉半徑 0.83 m 範圍內須淨空。"},
+  {k:"B",n:"睡眠區",x:[0,2.30],y:[1.66,4.60],c:"#c8442b",
+   f:"西牆無開口，適合作為床頭牆。可容納雙人床 1.52×1.88，床尾仍有餘裕。"},
+  {k:"C",n:"床尾走道",x:[2.30,2.96],y:[1.66,4.60],c:"#7a8188",
+   f:"0.66 m，床尾至衣櫃的通行帶，兼作衣櫃門扇開啟空間。"},
+  {k:"D",n:"衣櫃帶（東立面）",x:[2.96,3.56],y:[1.66,4.60],c:"#8a6d3b",
+   f:"東牆 2.94 m × 深 0.60 m。2.40 m 以下為吊掛與抽屜，2.42–3.43 m 建議設上掀櫃收納換季寢具。"},
+  {k:"E",n:"窗邊／床頭側",x:[0,2.30],y:[4.60,6.27],c:"#2f6fb5",
+   f:"2.30×1.67。W-201 窗（窗台高 1.21）位於此帶上方，落地窗 W-202 由此延伸。"},
+  {k:"F",n:"化妝／落地窗側",x:[2.30,3.56],y:[4.60,6.27],c:"#2f6fb5",
+   f:"1.26×1.67。W-202 落地窗 2.034×2.50 為平移式，窗前 0.6 m 須淨空。本室採光最佳位置。"}
+ ]},
+{id:"R-202",floor:"2F",name:"客房（辦公室同格局）",h:3.01,
+ poly:[[0,0],[3.05,0],[3.05,5.85],[0,5.85]],
+ zones:[
+  {k:"A",n:"南半區",x:[0,2.35],y:[0,2.95],c:"#7a8188",
+   f:"2.35×2.95。四面牆均無開窗紀錄，採光條件待現場確認。"},
+  {k:"B",n:"北半區",x:[0,2.35],y:[2.95,5.85],c:"#7a8188",
+   f:"2.35×2.90。若確認無自然採光，依規定不宜作為臥室，建議改作書房或儲藏。"},
+  {k:"C",n:"門側動線帶（東）",x:[2.35,3.05],y:[0,5.85],c:"#c8442b",
+   f:"0.70 m 寬。東牆設有兩樘門：房門（y 3.39–4.29）與廁所門（y 2.39–3.29），間距僅 0.10 m。"}
+ ]},
+{id:"R-301",floor:"3F",name:"頂樓酒吧",h:3.20,
+ poly:[[0,0],[1.17,0],[1.17,2.14],[2.85,2.14],[2.85,5.85],[0,5.85]],
+ zones:[
+  {k:"A",n:"冷藏儲酒角",x:[0,1.17],y:[0,2.14],c:"#8a6d3b",
+   f:"1.17×2.14 凹角，不在主要動線上，適合配置小冰箱與高酒櫃。"},
+  {k:"B",n:"西牆邊櫃帶",x:[0,0.50],y:[2.14,5.35],c:"#7a8188",
+   f:"須避開門 D-301（y 1.89–2.79）。櫃體深度超過 0.40 m 時，通行寬度將少於 0.55 m。"},
+  {k:"C",n:"吧桌核心",x:[0.50,1.90],y:[2.14,5.35],c:"#c8442b",
+   f:"1.40×3.21。高桌 2.00×0.90、檯面高 1.05 置中配置，為本區最關鍵之尺寸控制點。"},
+  {k:"D",n:"窗邊座位帶",x:[1.90,2.85],y:[2.14,5.35],c:"#2f6fb5",
+   f:"0.95 m 寬。W-301 落地窗 2.219×2.40（距南端 0.43 m）。建議高腳椅面窗配置，不設高櫃。"},
+  {k:"E",n:"酒櫃立面帶（北）",x:[0,2.85],y:[5.35,5.85],c:"#8a6d3b",
+   f:"北牆 2.85 m 無開口。下櫃高 0.90 m，壁掛酒架與杯架建議設於 1.50–1.90 m。"}
+ ]},
+{id:"R-302",floor:"3F",name:"辦公室（客房同格局）",h:3.01,
+ poly:[[0,0],[3.05,0],[3.05,5.85],[0,5.85]],
+ zones:[
+  {k:"A",n:"工作核心（北）",x:[0,2.35],y:[2.95,5.85],c:"#2f6fb5",
+   f:"2.35×2.90。書桌沿北牆可配置 1.60–2.20 m。本室位於三樓，未經實測，尺寸沿用客房。樓高沿用 3.01，同層酒吧實測為 3.20，施工前須複核。"},
+  {k:"B",n:"收納／備用（南）",x:[0,2.35],y:[0,2.95],c:"#8a6d3b",
+   f:"2.35×2.95。西牆整面可配置書櫃（深 0.35 m），南牆適合矮收納櫃，亦可規劃第二工作位。"},
+  {k:"C",n:"門側動線帶（東）",x:[2.35,3.05],y:[0,5.85],c:"#7a8188",
+   f:"0.70 m 寬。房門 D-302 位於東牆 y 3.39–4.29。本室較客房少一樘廁所門，東牆可用長度增加約 1.0 m。"}
+ ]}
+];
+
+function shoelace(p){
+  var s = 0;
+  for(var i=0;i<p.length;i++){ var a=p[i], b=p[(i+1)%p.length]; s += a[0]*b[1]-b[0]*a[1]; }
+  return Math.abs(s/2);
+}
+function zarea(z){ return (z.x[1]-z.x[0]) * (z.y[1]-z.y[0]); }
+function colName(hex){
+  hex = (hex||"").toUpperCase();
+  for(var i=0;i<PALETTE.length;i++)
+    for(var j=0;j<PALETTE[i].c.length;j++)
+      if(PALETTE[i].c[j][1].toUpperCase() === hex) return PALETTE[i].c[j][0];
+  return "自訂";
+}
+
+var ZOPT = (function(){
+  var h = '<option value="">選擇常用名稱⋯</option>';
+  ZONE_NAMES.forEach(function(g){
+    h += '<optgroup label="'+g.g+'">';
+    g.c.forEach(function(v){ h += '<option>'+v+'</option>'; });
+    h += '</optgroup>';
+  });
+  return h + '<option value="__custom">自訂（直接在左邊輸入）</option>';
+})();
+
+var S = 30, PAD = 26;
+var wrap = document.getElementById("rooms");
+
+function planSVG(r){
+  var xs = r.poly.map(function(p){return p[0];}), ys = r.poly.map(function(p){return p[1];});
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+  var W=(x1-x0)*S+PAD*2, H=(y1-y0)*S+PAD*2;
+  function T(x,y){ return [PAD+(x-x0)*S, PAD+(y1-y)*S]; }
+  var o = ['<svg viewBox="0 0 '+W.toFixed(0)+' '+H.toFixed(0)+'" width="'+W.toFixed(0)+'" height="'+H.toFixed(0)+
+           '" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,monospace">'];
+  r.zones.forEach(function(z){
+    var a=T(z.x[0],z.y[1]), b=T(z.x[1],z.y[0]);
+    o.push('<rect data-z="'+r.id+'-'+z.k+'" x="'+a[0].toFixed(1)+'" y="'+a[1].toFixed(1)+
+           '" width="'+(b[0]-a[0]).toFixed(1)+'" height="'+(b[1]-a[1]).toFixed(1)+
+           '" fill="'+z.c+'" fill-opacity=".16" stroke="'+z.c+'" stroke-width="1.1" style="cursor:pointer"><title>'+z.k+' '+z.n+'（點擊前往）</title></rect>');
+    var cx=(a[0]+b[0])/2, cy=(a[1]+b[1])/2;
+    o.push('<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="10" fill="'+z.c+'"/>');
+    o.push('<text x="'+cx.toFixed(1)+'" y="'+(cy+4).toFixed(1)+'" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">'+z.k+'</text>');
+  });
+  o.push('<path d="M '+r.poly.map(function(p){var t=T(p[0],p[1]);return t[0].toFixed(1)+","+t[1].toFixed(1);}).join(" L ")+
+         ' Z" fill="none" stroke="#14181f" stroke-width="3"/></svg>');
+  return o.join("");
+}
+
+/* ---------- 建立每區卡片 ---------- */
+ROOMS.forEach(function(r){
+  var floorArea = shoelace(r.poly);
+  var zoneSum = r.zones.reduce(function(a,z){ return a+zarea(z); },0);
+  var sec = document.createElement("section");
+  sec.className = "room";
+  sec.id = "room-" + r.id;
+  var zoneHTML = r.zones.map(function(z){
+    var key = r.id+"-"+z.k;
+    var w=(z.x[1]-z.x[0]).toFixed(2), d=(z.y[1]-z.y[0]).toFixed(2);
+    return '<div class="zone" id="zone-'+key+'" data-zone="'+key+'" style="border-left:3px solid '+z.c+'">'+
+      '<div class="zhead"><span class="zletter" style="background:'+z.c+'">'+z.k+'</span>'+
+      '<input class="zname" type="text" data-k="'+key+'-zname" value="'+z.n+'" aria-label="分區名稱">'+'<select class="zsel" data-zsel="'+key+'" aria-label="選擇常用名稱">'+ZOPT+'</select>'+
+      '<span class="zdim">'+w+' × '+d+' m ・ '+zarea(z).toFixed(2)+' ㎡ ・ 佔 '+
+        (zarea(z)/floorArea*100).toFixed(0)+'%</span></div>'+
+      '<div class="zfact">'+z.f+'</div>'+
+      '<label class="walk"><input type="checkbox" data-k="'+key+'-w"> 本區不施作，併為走道</label>'+
+      '<div class="zbody">'+
+
+      '<div class="field"><label>家具・擺設</label>'+
+        '<div class="tags" data-tags="'+key+'-fu"></div>'+
+        '<input type="hidden" data-k="'+key+'-fu">'+
+        '<button class="pickbtn" data-open="fu" data-key="'+key+'">＋ 家具庫（109 項）</button>'+
+        '<div class="picker" data-pick="fu-'+key+'"></div>'+
+        '<textarea data-k="'+key+'-f" placeholder="補充說明：尺寸、數量、做法（例：電視櫃做滿 2.6 m，下方懸空 15 cm）"></textarea>'+
+      '</div>'+
+
+      '<div class="field"><label>材質</label>'+
+        '<div class="tags" data-tags="'+key+'-ma"></div>'+
+        '<input type="hidden" data-k="'+key+'-ma">'+
+        '<button class="pickbtn" data-open="ma" data-key="'+key+'">＋ 材質庫（83 項）</button>'+
+        '<div class="picker" data-pick="ma-'+key+'"></div>'+
+        '<input type="text" data-k="'+key+'-m" placeholder="補充：品牌、型號、指定或迴避之材質">'+
+      '</div>'+
+
+      '<div class="field"><label>配色（先點選欲指定的欄位，再點選色格）</label>'+
+        '<div class="slots" data-slots="'+key+'">'+
+          '<div class="slot act" data-slot="1"><i style="background:#F5F1E8"></i><span><span class="lb">主色 60%</span><span class="nm">米白 #F5F1E8</span></span></div>'+
+          '<div class="slot" data-slot="2"><i style="background:#7B5637"></i><span><span class="lb">輔色 30%</span><span class="nm">胡桃 #7B5637</span></span></div>'+
+          '<div class="slot" data-slot="3"><i style="background:#B8955A"></i><span><span class="lb">點綴 10%</span><span class="nm">黃銅 #B8955A</span></span></div>'+
+        '</div>'+
+        '<input type="hidden" data-k="'+key+'-c1" value="#F5F1E8">'+
+        '<input type="hidden" data-k="'+key+'-c2" value="#7B5637">'+
+        '<input type="hidden" data-k="'+key+'-c3" value="#B8955A">'+
+        '<button class="pickbtn" data-open="co" data-key="'+key+'">＋ 色盤（56 色）</button>'+
+        '<div class="picker" data-pick="co-'+key+'"></div>'+
+      '</div>'+
+
+      '<div class="field"><label>備註／限制條件</label>'+
+        '<textarea data-k="'+key+'-n" placeholder="例：避免吊燈（寵物攀爬考量）"></textarea></div>'+
+      '</div></div>';
+  }).join("");
+  sec.innerHTML =
+    '<div class="rhead"><span class="fl">'+r.floor+'</span>'+
+    '<input class="rname" type="text" data-k="'+r.id+'-name" value="'+r.name+'" aria-label="空間名稱">'+
+    '<span class="meta">'+r.id+' ・ 樓板 '+floorArea.toFixed(2)+' ㎡ ・ 淨高 '+r.h.toFixed(2)+' m ・ '+
+      r.zones.length+' 區 ・ 涵蓋 '+(zoneSum/floorArea*100).toFixed(1)+'%</span></div>'+
+    '<div class="ruse"><span class="rlbl">用途</span>'+
+      '<div class="tags" data-tags="'+r.id+'-use"></div>'+
+      '<input type="hidden" data-k="'+r.id+'-use">'+
+      '<button class="pickbtn" data-open="us" data-key="'+r.id+'">＋ 用途標籤（38 項）</button>'+
+      '<div class="picker" data-pick="us-'+r.id+'"></div>'+
+    '</div>'+
+    '<div class="znav" data-znav="'+r.id+'">'+
+      '<span class="rlbl">分區</span>'+
+      r.zones.map(function(z){
+        return '<button class="zchip" data-go="'+r.id+'-'+z.k+'" style="border-color:'+z.c+'">'+
+               '<i style="background:'+z.c+'"></i>'+z.k+'　<span class="zl" data-zl="'+r.id+'-'+z.k+'">'+z.n+'</span></button>';
+      }).join("")+
+    '</div>'+
+    '<div class="planwrap">'+planSVG(r)+'</div>'+ zoneHTML;
+  wrap.appendChild(sec);
+});
+
+/* ---------- 標籤（家具／材質） ---------- */
+function getList(k){
+  var el = document.querySelector('#viewzone [data-k="'+k+'"]');
+  return (el && el.value) ? el.value.split("|").filter(Boolean) : [];
+}
+function setList(k, arr){
+  var el = document.querySelector('#viewzone [data-k="'+k+'"]');
+  if(el) el.value = arr.join("|");
+  renderTags(k);
+  syncChips(k);
+}
+function renderTags(k){
+  var box = document.querySelector('#viewzone [data-tags="'+k+'"]');
+  if(!box) return;
+  var arr = getList(k);
+  box.innerHTML = arr.length ? arr.map(function(v){
+    return '<span class="tag">'+v+'<button data-del="'+k+'" data-v="'+v+'" title="移除">×</button></span>';
+  }).join("") : '<span class="empty">尚未選擇</span>';
+}
+function syncChips(k){
+  var m = k.match(/^(.*)-(fu|ma|use)$/);
+  if(!m) return;
+  var arr = getList(k);
+  var pk = m[1], kind = (m[2] === "use") ? "us" : m[2];
+  var box = document.querySelector('[data-pick="'+kind+"-"+pk+'"]');
+  if(!box) return;
+  Array.prototype.slice.call(box.querySelectorAll(".chip")).forEach(function(c){
+    c.classList.toggle("on", arr.indexOf(c.textContent) >= 0);
+  });
+}
+document.addEventListener("click", function(e){
+  var del = e.target.getAttribute && e.target.getAttribute("data-del");
+  if(del){
+    var v = e.target.getAttribute("data-v");
+    setList(del, getList(del).filter(function(x){ return x !== v; }));
+    touch(); if(typeof queueAuto === "function") queueAuto();
+  }
+});
+
+/* ---------- 挑選面板（首次點開才建立） ---------- */
+function buildPicker(kind, key, box){
+  var html = "";
+  if(kind === "co"){
+    html += '<div class="psearch"><input type="text" class="cfind" placeholder="自訂色碼，例 #A54B34"></div>';
+    PALETTE.forEach(function(g){
+      html += '<div class="pgroup"><h4>'+g.g+'</h4><div class="swatches">';
+      g.c.forEach(function(c){
+        html += '<button class="swx" data-hex="'+c[1]+'" data-nm="'+c[0]+'" title="'+c[0]+' '+c[1]+
+                '" style="background:'+c[1]+'"></button>';
+      });
+      html += '</div></div>';
+    });
+  }else{
+    var LIBD = (kind === "fu") ? FURNLIB : (kind === "us") ? USES : MATERIALS;
+    html += '<div class="psearch"><input type="text" class="find" placeholder="搜尋…"></div>';
+    LIBD.forEach(function(g){
+      html += '<div class="pgroup"><h4>'+g.g+'</h4><div class="chips">';
+      g.c.forEach(function(v){ html += '<button class="chip">'+v+'</button>'; });
+      html += '</div></div>';
+    });
+    html += '<div class="addrow"><input type="text" class="own" placeholder="自訂項目：輸入後按新增">'+
+            '<button class="addbtn">新增</button></div>';
+  }
+  box.innerHTML = html;
+
+  if(kind === "co"){
+    box.addEventListener("click", function(e){
+      var b = e.target.closest ? e.target.closest(".swx") : null;
+      if(!b) return;
+      setSlot(key, b.getAttribute("data-hex"), b.getAttribute("data-nm"));
+      touch(); queueAuto();
+    });
+    var cf = box.querySelector(".cfind");
+    cf.addEventListener("change", function(){
+      var v = cf.value.trim();
+      if(/^#?[0-9a-fA-F]{6}$/.test(v)){
+        if(v[0] !== "#") v = "#" + v;
+        setSlot(key, v.toUpperCase(), colName(v));
+        touch();
+      }
+    });
+  }else{
+    var k = key + "-" + (kind === "us" ? "use" : kind);
+    box.addEventListener("click", function(e){
+      var c = e.target;
+      if(c.classList && c.classList.contains("chip")){
+        var arr = getList(k), v = c.textContent, i = arr.indexOf(v);
+        if(i >= 0) arr.splice(i,1); else arr.push(v);
+        setList(k, arr); touch(); queueAuto();
+      }
+      if(c.classList && c.classList.contains("addbtn")){
+        var inp = box.querySelector(".own"), v2 = inp.value.trim();
+        if(v2){ var a2 = getList(k); if(a2.indexOf(v2) < 0) a2.push(v2); setList(k, a2); inp.value = ""; touch(); queueAuto(); }
+      }
+    });
+    var f = box.querySelector(".find");
+    f.addEventListener("input", function(){
+      var q = f.value.trim();
+      Array.prototype.slice.call(box.querySelectorAll(".pgroup")).forEach(function(g){
+        var any = false;
+        Array.prototype.slice.call(g.querySelectorAll(".chip")).forEach(function(c){
+          var hit = !q || c.textContent.indexOf(q) >= 0;
+          c.style.display = hit ? "" : "none";
+          if(hit) any = true;
+        });
+        g.style.display = any ? "" : "none";
+      });
+    });
+    syncChips(k);
+  }
+}
+
+function setSlot(key, hex, nm){
+  var slots = document.querySelector('#viewzone [data-slots="'+key+'"]');
+  var act = slots.querySelector(".slot.act") || slots.querySelector(".slot");
+  var n = act.getAttribute("data-slot");
+  act.querySelector("i").style.background = hex;
+  act.querySelector(".nm").textContent = nm + " " + hex;
+  var h = document.querySelector('#viewzone [data-k="'+key+'-c'+n+'"]');
+  if(h) h.value = hex;
+}
+function refreshSlots(key){
+  var slots = document.querySelector('#viewzone [data-slots="'+key+'"]');
+  if(!slots) return;
+  [1,2,3].forEach(function(n){
+    var h = document.querySelector('#viewzone [data-k="'+key+'-c'+n+'"]');
+    var sl = slots.querySelector('[data-slot="'+n+'"]');
+    if(h && sl){
+      sl.querySelector("i").style.background = h.value;
+      sl.querySelector(".nm").textContent = colName(h.value) + " " + h.value;
+    }
+  });
+}
+
+document.addEventListener("click", function(e){
+  var t = e.target;
+  if(t.classList && t.classList.contains("pickbtn")){
+    var kind = t.getAttribute("data-open"), key = t.getAttribute("data-key");
+    var box = document.querySelector('[data-pick="'+kind+"-"+key+'"]');
+    if(!box.dataset.built){ buildPicker(kind, key, box); box.dataset.built = "1"; }
+    box.classList.toggle("on");
+    t.textContent = box.classList.contains("on") ? "－ 收起" :
+      (kind === "fu" ? "＋ 家具庫（109 項）" : kind === "ma" ? "＋ 材質庫（83 項）" :
+       kind === "us" ? "＋ 用途標籤（38 項）" : "＋ 色盤（56 色）");
+    return;
+  }
+  var sl = t.closest ? t.closest("#viewzone .slot") : null;
+  if(sl){
+    var par = sl.parentNode;
+    Array.prototype.slice.call(par.querySelectorAll(".slot")).forEach(function(x){ x.classList.remove("act"); });
+    sl.classList.add("act");
+  }
+});
+
+/* ---------- 分區名稱下拉 ---------- */
+document.addEventListener("change", function(e){
+  var key = e.target.getAttribute && e.target.getAttribute("data-zsel");
+  if(!key) return;
+  var v = e.target.value;
+  var inp = document.querySelector('#viewzone [data-k="'+key+'-zname"]');
+  if(!inp) return;
+  if(v === "__custom"){ e.target.value = ""; inp.focus(); inp.select(); return; }
+  if(v){
+    inp.value = v;
+    inp.dispatchEvent(new Event("input", {bubbles:true}));
+    e.target.value = "";
+  }
+});
+
+/* ---------- 跳轉到分區 ---------- */
+function gotoZone(key){
+  var el = document.getElementById("zone-" + key);
+  if(!el) return;
+  var y = el.getBoundingClientRect().top + window.pageYOffset - 150;
+  window.scrollTo({top:y, behavior:"smooth"});
+  el.classList.add("flash");
+  setTimeout(function(){ el.classList.remove("flash"); }, 1400);
+}
+window.__gotoZone = gotoZone;
+window.__zoneList = function(id){
+  for(var i=0;i<ROOMS.length;i++) if(ROOMS[i].id === id)
+    return ROOMS[i].zones.map(function(z){
+      return {k:z.k, n:zoneName(id+"-"+z.k), c:z.c};
+    });
+  return [];
+};
+document.addEventListener("click", function(e){
+  var t = e.target;
+  var rect = (t.getAttribute && t.getAttribute("data-z")) ? t.getAttribute("data-z") : null;
+  if(rect){ gotoZone(rect); return; }
+  var chip = t.closest ? t.closest("#viewzone .zchip") : null;
+  if(chip){ gotoZone(chip.getAttribute("data-go")); }
+});
+
+/* ---------- 走道標記 ---------- */
+function syncWalk(cb){
+  var key = cb.getAttribute("data-k").replace(/-w$/, "");
+  var card = document.getElementById("zone-"+key);
+  if(card) card.classList.toggle("off", cb.checked);
+  var rect = document.querySelector('[data-z="'+key+'"]');
+  if(rect){
+    rect.setAttribute("fill-opacity", cb.checked ? "0.04" : "0.16");
+    rect.setAttribute("stroke-dasharray", cb.checked ? "4 3" : "");
+  }
+}
+document.addEventListener("change", function(e){
+  if(e.target.type === "checkbox" && /-w$/.test(e.target.getAttribute("data-k")||"")){
+    syncWalk(e.target);
+    if(typeof queueAuto === "function") queueAuto();
+  }
+});
+
+/* ---------- 方案管理 ---------- */
+var els = function(){ return Array.prototype.slice.call(document.querySelectorAll("#viewzone [data-k]")); };
+var status = document.getElementById("status");
+/* ---------- 本機資料庫（瀏覽器儲存，不經任何伺服器） ---------- */
+var DB = (function(){
+  var ok = false;
+  try{
+    window.localStorage.setItem("__probe__", "1");
+    window.localStorage.removeItem("__probe__");
+    ok = true;
+  }catch(err){ ok = false; }
+  return {
+    ok: ok,
+    get: function(k){
+      try{
+        var v = window.localStorage.getItem("houseplan:" + k);
+        return Promise.resolve(v ? {value:v} : null);
+      }catch(err){ return Promise.resolve(null); }
+    },
+    set: function(k, v){
+      try{ window.localStorage.setItem("houseplan:" + k, v); return Promise.resolve(true); }
+      catch(err){ return Promise.reject(err); }
+    },
+    del: function(k){
+      try{ window.localStorage.removeItem("houseplan:" + k); }catch(err){}
+    },
+    bytes: function(){
+      var n = 0;
+      try{
+        for(var i=0;i<window.localStorage.length;i++){
+          var k = window.localStorage.key(i);
+          if(k.indexOf("houseplan:") === 0) n += k.length + (window.localStorage.getItem(k)||"").length;
+        }
+      }catch(err){}
+      return n * 2;
+    }
+  };
+})();
+
+var PLANS = [], curId = null, canStore = DB.ok;
+
+function nowStr(){
+  var d = new Date();
+  function p(n){ return (n<10?"0":"")+n; }
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+function touch(){ status.textContent = "有未儲存的變更"; }
+
+function collect(){
+  var o = {};
+  els().forEach(function(e){
+    if(e.type === "checkbox"){ if(e.checked) o[e.getAttribute("data-k")] = "1"; }
+    else if(e.value) o[e.getAttribute("data-k")] = e.value;
+  });
+  return o;
+}
+function clearForm(){
+  els().forEach(function(e){
+    if(e.type === "checkbox"){ e.checked = false; syncWalk(e); }
+    else if(/-c1$/.test(e.getAttribute("data-k"))) e.value = "#F5F1E8";
+    else if(/-c2$/.test(e.getAttribute("data-k"))) e.value = "#7B5637";
+    else if(/-c3$/.test(e.getAttribute("data-k"))) e.value = "#B8955A";
+    else if(/-zname$/.test(e.getAttribute("data-k"))) e.value = zoneDefault(e.getAttribute("data-k").replace(/-zname$/, ""));
+    else if(/-name$/.test(e.getAttribute("data-k"))) e.value = defaultName(e.getAttribute("data-k"));
+    else e.value = "";
+  });
+  refreshAll();
+}
+function apply(o){
+  clearForm();
+  els().forEach(function(e){
+    var v = o[e.getAttribute("data-k")];
+    if(v === undefined) return;
+    if(e.type === "checkbox"){ e.checked = (v === "1"); syncWalk(e); }
+    else e.value = v;
+  });
+  refreshAll();
+}
+function defaultName(k){
+  var id = k.replace(/-name$/, "");
+  for(var i=0;i<ROOMS.length;i++) if(ROOMS[i].id === id) return ROOMS[i].name;
+  return "";
+}
+function zoneDefault(key){
+  for(var i=0;i<ROOMS.length;i++){
+    if(key.indexOf(ROOMS[i].id + "-") !== 0) continue;
+    var k = key.slice(ROOMS[i].id.length + 1);
+    for(var j=0;j<ROOMS[i].zones.length;j++) if(ROOMS[i].zones[j].k === k) return ROOMS[i].zones[j].n;
+  }
+  return "";
+}
+function zoneName(key){
+  var e = document.querySelector('#viewzone [data-k="'+key+'-zname"]');
+  return (e && e.value.trim()) ? e.value.trim() : zoneDefault(key);
+}
+function syncZoneLabel(key){
+  var el = document.querySelector('#viewzone [data-zl="'+key+'"]');
+  if(el) el.textContent = zoneName(key);
+  if(window.__redrawZones) window.__redrawZones();
+}
+function roomName(id){
+  var e = document.querySelector('#viewzone [data-k="'+id+'-name"]');
+  return (e && e.value.trim()) ? e.value.trim() : id;
+}
+function refreshAll(){
+  ROOMS.forEach(function(r){ r.zones.forEach(function(z){
+    var key = r.id+"-"+z.k;
+    renderTags(key+"-fu"); renderTags(key+"-ma"); syncChips(key+"-fu"); syncChips(key+"-ma"); refreshSlots(key);
+    var zl = document.querySelector('#viewzone [data-zl="'+key+'"]');
+    if(zl) zl.textContent = zoneName(key);
+  });
+  renderTags(r.id+"-use"); syncChips(r.id+"-use");
+  if(window.__setRoomLabel) window.__setRoomLabel(r.id, roomName(r.id));
+  });
+  if(window.__redrawZones) window.__redrawZones();
+}
+function filledCount(data){
+  var n = 0;
+  ROOMS.forEach(function(r){ r.zones.forEach(function(z){
+    var key = r.id+"-"+z.k;
+    if(data[key+"-w"] || data[key+"-fu"] || data[key+"-ma"] || data[key+"-f"] || data[key+"-m"] || data[key+"-n"]) n++;
+  }); });
+  return n;
+}
+function totalZones(){
+  return ROOMS.reduce(function(a,r){ return a + r.zones.length; }, 0);
+}
+
+function persist(){
+  if(!canStore) return Promise.resolve(false);
+  return DB.set("zoneplans", JSON.stringify({v:1, plans:PLANS}))
+    .then(function(){ return true; }).catch(function(){ return false; });
+}
+function uid(){ return "P" + Date.now().toString(36) + Math.floor(Math.random()*900+100); }
+
+function curPlan(){
+  for(var i=0;i<PLANS.length;i++) if(PLANS[i].id === curId) return PLANS[i];
+  return null;
+}
+function newPlan(silent){
+  var n = PLANS.length + 1;
+  var p = {id:uid(), name:"方案 "+n, author:(document.getElementById("planAuthor").value||""),
+           created:nowStr(), updated:"", data:{}};
+  PLANS.push(p); curId = p.id;
+  document.getElementById("planName").value = p.name;
+  clearForm(); renderPlans();
+  if(!silent) status.textContent = "已建立新方案，填寫後請按儲存";
+}
+function savePlan(asNew){
+  var name = (document.getElementById("planName").value || "").trim();
+  var author = (document.getElementById("planAuthor").value || "").trim();
+  if(!name){ name = "未命名方案"; document.getElementById("planName").value = name; }
+  var p = curPlan();
+  if(asNew || !p){
+    p = {id:uid(), name:name, author:author, created:nowStr(), updated:"", data:{}};
+    PLANS.push(p); curId = p.id;
+  }
+  p.name = name; p.author = author; p.data = collect(); p.updated = nowStr();
+  renderPlans();
+  persist().then(function(ok){
+    status.textContent = ok ? ("已儲存　" + p.updated + (p.author ? "　" + p.author : ""))
+                            : "已暫存於本次瀏覽，請使用「匯出備份」保存";
+  });
+  queueSharePush(300);
+}
+function loadPlan(id){
+  var p = null;
+  for(var i=0;i<PLANS.length;i++) if(PLANS[i].id === id) p = PLANS[i];
+  if(!p) return;
+  curId = id;
+  document.getElementById("planName").value = p.name;
+  document.getElementById("planAuthor").value = p.author || "";
+  apply(p.data || {});
+  renderPlans();
+  status.textContent = "已載入「" + p.name + "」" + (p.updated ? "　最後儲存 " + p.updated : "");
+}
+function renamePlan(id){
+  var p = null;
+  for(var i=0;i<PLANS.length;i++) if(PLANS[i].id === id) p = PLANS[i];
+  if(!p) return;
+  var v = prompt("輸入新檔名", p.name);
+  if(v === null) return;
+  p.name = v.trim() || p.name;
+  if(id === curId) document.getElementById("planName").value = p.name;
+  renderPlans(); persist();
+}
+function dupPlan(id){
+  for(var i=0;i<PLANS.length;i++) if(PLANS[i].id === id){
+    var c = JSON.parse(JSON.stringify(PLANS[i]));
+    c.id = uid(); c.name = PLANS[i].name + "（複本）"; c.created = nowStr(); c.updated = "";
+    PLANS.push(c); renderPlans(); persist();
+    status.textContent = "已複製為「" + c.name + "」";
+    return;
+  }
+}
+function delPlan(id){
+  var p = null, idx = -1;
+  for(var i=0;i<PLANS.length;i++) if(PLANS[i].id === id){ p = PLANS[i]; idx = i; }
+  if(!p) return;
+  if(!confirm("確定刪除「" + p.name + "」？此動作無法復原。")) return;
+  PLANS.splice(idx,1);
+  if(curId === id){
+    if(PLANS.length) loadPlan(PLANS[PLANS.length-1].id);
+    else { curId = null; newPlan(true); }
+  }
+  renderPlans(); persist();
+  status.textContent = "已刪除「" + p.name + "」";
+}
+
+function renderPlans(){
+  var tb = document.querySelector("#planList tbody");
+  if(!PLANS.length){
+    tb.innerHTML = '<tr><td colspan="5" class="empty">尚無已儲存的方案</td></tr>';
+    return;
+  }
+  tb.innerHTML = PLANS.map(function(p){
+    var n = filledCount(p.id === curId ? collect() : (p.data || {}));
+    return '<tr class="'+(p.id===curId?"cur":"")+'">'+
+      '<td>'+ (p.name || "未命名") + (p.id===curId ? '　<span class="mono2">（編輯中）</span>' : '') +'</td>'+
+      '<td>'+ (p.author || '<span class="mono2">—</span>') +'</td>'+
+      '<td class="mono2">'+ (p.updated || "尚未儲存") +'</td>'+
+      '<td class="mono2">'+ n + " / " + totalZones() +'</td>'+
+      '<td><div class="act">'+
+        '<button data-a="load" data-id="'+p.id+'">載入</button>'+
+        '<button data-a="ren" data-id="'+p.id+'">改名</button>'+
+        '<button data-a="dup" data-id="'+p.id+'">複製</button>'+
+        '<button class="dg" data-a="del" data-id="'+p.id+'">刪除</button>'+
+      '</div></td></tr>';
+  }).join("");
+}
+document.querySelector("#planList").addEventListener("click", function(e){
+  var b = e.target;
+  var a = b.getAttribute && b.getAttribute("data-a");
+  if(!a) return;
+  var id = b.getAttribute("data-id");
+  if(a === "load") loadPlan(id);
+  if(a === "ren") renamePlan(id);
+  if(a === "dup") dupPlan(id);
+  if(a === "del") delPlan(id);
+});
+
+/* 備份 */
+function backup(){
+  var p = curPlan(); if(p){ p.data = collect(); p.name = document.getElementById("planName").value || p.name;
+    p.author = document.getElementById("planAuthor").value || p.author; }
+  metaFromForm();
+  var t = JSON.stringify({v:1, exported:nowStr(), meta:META, plans:PLANS}, null, 1);
+  try{
+    var blob = new Blob([t], {type:"application/json;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "空間分區規劃_備份_" + nowStr().replace(/[: ]/g,"-") + ".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    status.textContent = "已匯出備份檔（" + PLANS.length + " 個方案）";
+  }catch(err){ status.textContent = "備份下載被瀏覽器阻擋"; }
+}
+document.getElementById("btnBackup").addEventListener("click", backup);
+document.getElementById("btnImport").addEventListener("click", function(){
+  document.getElementById("fileImport").click();
+});
+document.getElementById("fileImport").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(){
+    try{
+      var o = JSON.parse(rd.result);
+      if(o && o.meta){ META = o.meta; metaToForm(); }
+      var arr = (o && o.plans) ? o.plans : [];
+      if(!arr.length){ status.textContent = "備份檔沒有方案資料"; return; }
+      arr.forEach(function(p){
+        p.id = uid();
+        p.name = (p.name || "匯入方案") + "（匯入）";
+        PLANS.push(p);
+      });
+      renderPlans(); persist();
+      status.textContent = "已匯入 " + arr.length + " 個方案";
+    }catch(err){ status.textContent = "備份檔格式無法讀取"; }
+  };
+  rd.readAsText(f);
+  e.target.value = "";
+});
+
+/* ---------- 文字匯出 ---------- */
+function buildText(){
+  var p = curPlan();
+  var L = ["# 空間分區規劃表"];
+  L.push("");
+  L.push("- 檔名：" + (document.getElementById("planName").value || "未命名方案"));
+  L.push("- 填表人：" + (document.getElementById("planAuthor").value || "未填"));
+  L.push("- 最後儲存：" + ((p && p.updated) ? p.updated : "尚未儲存"));
+  L.push("- 產出時間：" + nowStr());
+  L.push("");
+  ROOMS.forEach(function(r){
+    var fa = shoelace(r.poly);
+    var body = [], walk = [], wa = 0;
+    r.zones.forEach(function(z){
+      var key = r.id+"-"+z.k;
+      function g(sfx){
+        var e = document.querySelector('#viewzone [data-k="'+key+"-"+sfx+'"]');
+        return e ? (e.type === "checkbox" ? (e.checked ? "1" : "") : e.value.trim()) : "";
+      }
+      if(g("w")){ walk.push(z.k+" "+zoneName(key)+"（"+zarea(z).toFixed(2)+" ㎡）"); wa += zarea(z); return; }
+      var fu = getList(key+"-fu"), ma = getList(key+"-ma");
+      var f = g("f"), m = g("m"), n = g("n");
+      if(!(fu.length || ma.length || f || m || n)) return;
+      body.push("### "+z.k+"　"+zoneName(key)+"（"+(z.x[1]-z.x[0]).toFixed(2)+" × "+(z.y[1]-z.y[0]).toFixed(2)+
+                " m ／ "+zarea(z).toFixed(2)+" ㎡）");
+      if(fu.length) body.push("- 家具擺設：" + fu.join("、"));
+      if(f) body.push("- 擺設補充：" + f.replace(/\n/g, " / "));
+      if(ma.length) body.push("- 材質：" + ma.join("、"));
+      if(m) body.push("- 材質補充：" + m);
+      body.push("- 配色：主 "+colName(g("c1"))+" "+g("c1")+"　輔 "+colName(g("c2"))+" "+g("c2")+
+                "　點綴 "+colName(g("c3"))+" "+g("c3"));
+      if(n) body.push("- 備註：" + n.replace(/\n/g, " / "));
+      body.push("");
+    });
+    if(body.length || walk.length){
+      L.push("## "+r.floor+"　"+roomName(r.id)+"　"+r.id+"（樓板 "+fa.toFixed(2)+" ㎡）");
+      L.push("");
+      var us = getList(r.id+"-use");
+      if(us.length){ L.push("**用途：** "+us.join("、")); L.push(""); }
+      if(walk.length){
+        L.push("**併為走道／不施作：** "+walk.join("、")+"　合計 "+wa.toFixed(2)+
+               " ㎡（佔 "+(wa/fa*100).toFixed(0)+"%）");
+        L.push("");
+      }
+      L = L.concat(body);
+    }
+  });
+  if(L.length <= 6) L.push("（尚未填寫任何分區）");
+  return L.join("\n");
+}
+
+document.getElementById("btnSave").addEventListener("click", function(){ savePlan(false); });
+document.getElementById("btnSaveAs").addEventListener("click", function(){
+  var v = prompt("另存新檔的檔名", (document.getElementById("planName").value || "方案") + " 複本");
+  if(v === null) return;
+  document.getElementById("planName").value = v.trim() || "未命名方案";
+  savePlan(true);
+});
+document.getElementById("btnNew").addEventListener("click", function(){
+  if(!confirm("建立新方案？目前未儲存的內容將不會保留。")) return;
+  newPlan(false);
+});
+document.getElementById("btnExport").addEventListener("click", function(){
+  var t = buildText(), out = document.getElementById("out");
+  out.value = t; out.style.display = "block"; out.scrollIntoView({behavior:"smooth", block:"center"});
+  try{
+    var blob = new Blob([t], {type:"text/markdown;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (document.getElementById("planName").value || "空間分區規劃") + ".md";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    status.textContent = "已匯出文字檔（若未下載，可直接複製下方文字）";
+  }catch(err){ status.textContent = "下載被瀏覽器阻擋，請複製下方文字"; }
+});
+document.getElementById("btnCopy").addEventListener("click", function(){
+  var t = buildText(), out = document.getElementById("out");
+  out.value = t; out.style.display = "block";
+  try{
+    navigator.clipboard.writeText(t).then(function(){ status.textContent = "已複製到剪貼簿"; })
+      .catch(function(){ out.select(); status.textContent = "請手動複製下方文字"; });
+  }catch(err){ out.select(); status.textContent = "請手動複製下方文字"; }
+});
+document.getElementById("btnClear").addEventListener("click", function(){
+  if(!confirm("清空目前方案的所有欄位？（不會刪除已儲存的方案）")) return;
+  clearForm();
+  status.textContent = "已清空欄位，尚未儲存";
+});
+var autoT = null;
+function autoSave(){
+  var p = curPlan();
+  if(!p) return;
+  p.data = collect();
+  p.name = document.getElementById("planName").value || p.name;
+  p.author = document.getElementById("planAuthor").value || p.author;
+  p.updated = nowStr();
+  renderPlans();
+  persist().then(function(ok){
+    status.textContent = ok ? ("已自動存檔　" + p.updated) : "自動存檔失敗，請改用匯出備份";
+    if(window.__refreshHome) window.__refreshHome();
+  });
+  queueSharePush(500);
+}
+function queueAuto(){
+  if(!canStore) return;
+  if(autoT) clearTimeout(autoT);
+  autoT = setTimeout(autoSave, 1200);
+}
+document.addEventListener("input", function(e){
+  var k = e.target.getAttribute && e.target.getAttribute("data-k");
+  if(!k) return;
+  touch(); queueAuto();
+  queueSharePush(1200);
+  if(/-zname$/.test(k)){ syncZoneLabel(k.replace(/-zname$/, "")); }
+  if(/^(?!.*-zname$).*-name$/.test(k) && window.__setRoomLabel){
+    window.__setRoomLabel(k.replace(/-name$/, ""), e.target.value.trim() || defaultName(k));
+  }
+});
+["planName","planAuthor"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", function(){ touch(); queueSharePush(1200); });
+});
+
+/* ---------- 啟動 ---------- */
+refreshAll();
+if(!canStore){
+  var w = document.getElementById("storeWarn");
+  w.style.display = "block";
+  w.textContent = "此瀏覽器不允許本機儲存（常見於無痕視窗），方案僅保留於本次瀏覽。請改用一般視窗，或於填寫後使用「匯出備份」下載 JSON 檔。";
+}
+(function boot(){
+  if(!canStore){ newPlan(true); renderPlans(); return; }
+  DB.get("zoneplans").then(function(r){
+    var o = r && r.value ? JSON.parse(r.value) : null;
+    PLANS = (o && o.plans) ? o.plans : [];
+    if(PLANS.length){ loadPlan(PLANS[PLANS.length-1].id); }
+    else { newPlan(true); }
+    renderPlans();
+    if(typeof dbStatText === "function") dbStatText();
+  }).catch(function(){ PLANS = []; newPlan(true); renderPlans(); });
+})();
+
+/* ---------- 首頁 ---------- */
+var META = {project:"", client:"", addr:"", note:"", updated:"", sharedStamp:""};
+var MK = ["mProject","mClient","mAddr","mNote"], MF = ["project","client","addr","note"];
+
+function metaFromForm(){
+  MK.forEach(function(id,i){ META[MF[i]] = (document.getElementById(id).value || "").trim(); });
+}
+function metaToForm(){
+  MK.forEach(function(id,i){ document.getElementById(id).value = META[MF[i]] || ""; });
+  document.getElementById("projTitle").textContent = META.project || "透天住宅室內設計專案";
+  var sub = [];
+  if(META.client) sub.push("業主 " + META.client);
+  if(META.addr) sub.push(META.addr);
+  if(META.note) sub.push(META.note);
+  document.getElementById("projSub").textContent = sub.length ? sub.join("・") : "實測資料・配置提案・分區規劃";
+  document.getElementById("mStatus").textContent = META.updated ? ("最後儲存 " + META.updated) : "尚未儲存";
+}
+function saveMeta(){
+  metaFromForm();
+  META.updated = nowStr();
+  metaToForm();
+  if(canStore){
+    DB.set("zoneproject", JSON.stringify(META))
+      .then(function(){ document.getElementById("mStatus").textContent = "已儲存　" + META.updated; })
+      .catch(function(){ document.getElementById("mStatus").textContent = "已暫存於本次瀏覽"; });
+  }else{
+    document.getElementById("mStatus").textContent = "已暫存於本次瀏覽，請改用一般視窗或匯出備份";
+  }
+  queueSharePush(300);
+}
+function filledOfRoom(rid, data){
+  var n = 0, room = null;
+  for(var i=0;i<ROOMS.length;i++) if(ROOMS[i].id === rid) room = ROOMS[i];
+  if(!room) return 0;
+  room.zones.forEach(function(z){
+    var k = rid+"-"+z.k;
+    if(data[k+"-w"] || data[k+"-fu"] || data[k+"-ma"] || data[k+"-f"] || data[k+"-m"] || data[k+"-n"]) n++;
+  });
+  return n;
+}
+function refreshHome(){
+  metaToForm();
+  var data = collect();
+  var totalArea = ROOMS.reduce(function(a,r){ return a + shoelace(r.poly); }, 0);
+  var filled = filledCount(data);
+  var last = "";
+  PLANS.forEach(function(p){ if(p.updated && p.updated > last) last = p.updated; });
+  document.getElementById("hstats").innerHTML =
+    '<div><dt>樓層</dt><dd>3<small>層</small></dd></div>'+
+    '<div><dt>已建檔空間</dt><dd>'+ROOMS.length+'<small>間</small></dd></div>'+
+    '<div><dt>實測樓板</dt><dd>'+totalArea.toFixed(1)+'<small>㎡</small></dd></div>'+
+    '<div><dt>約合</dt><dd>'+(totalArea/3.305785).toFixed(1)+'<small>坪</small></dd></div>'+
+    '<div><dt>分區總數</dt><dd>'+totalZones()+'<small>區</small></dd></div>'+
+    '<div><dt>已填分區</dt><dd>'+filled+'<small>/ '+totalZones()+'</small></dd></div>'+
+    '<div><dt>方案數</dt><dd>'+PLANS.length+'<small>個</small></dd></div>'+
+    '<div><dt>最後儲存</dt><dd style="font-size:14px">'+(last || "—")+'</dd></div>';
+
+  document.getElementById("hrooms").innerHTML = ROOMS.map(function(r){
+    var us = getList(r.id+"-use");
+    return '<div class="hrc">'+
+      '<div class="t"><span class="fl">'+r.floor+'</span><span class="nm">'+roomName(r.id)+'</span></div>'+
+      '<div class="d">'+r.id+' ・ '+shoelace(r.poly).toFixed(2)+' ㎡ ・ 淨高 '+r.h.toFixed(2)+' m</div>'+
+      '<div class="u">'+(us.length ? us.join("、") : "尚未指定用途")+'</div>'+
+      '<div class="d">已填 '+filledOfRoom(r.id, data)+' / '+r.zones.length+' 區</div>'+
+      '<div class="bs"><button data-go3d="'+r.id+'">看 3D</button>'+
+      '<button data-gozone="'+r.id+'">填寫分區</button></div></div>';
+  }).join("");
+}
+window.__refreshHome = refreshHome;
+
+document.getElementById("hrooms").addEventListener("click", function(e){
+  var a = e.target.getAttribute && (e.target.getAttribute("data-go3d") || e.target.getAttribute("data-gozone"));
+  if(!a) return;
+  var is3d = !!e.target.getAttribute("data-go3d");
+  if(window.__showTab) window.__showTab(is3d ? "3d" : "zone");
+  if(window.__pickRoom) window.__pickRoom(a);
+});
+document.getElementById("mSave").addEventListener("click", saveMeta);
+MK.forEach(function(id){
+  document.getElementById(id).addEventListener("input", function(){
+    document.getElementById("mStatus").textContent = "有未儲存的變更";
+    queueSharePush(1200);
+  });
+});
+
+
+/* ---------- 專案即時同步 ---------- */
+var SHARE = {remote:null, stamp:"", timer:0, pushTimer:0, pushing:false, localDirty:false, ready:false};
+function shStat(t){
+  var e=document.getElementById("shareStat"); if(e) e.textContent=t;
+  var s=document.getElementById("syncMiniStat"); if(s) s.textContent="同步狀態：" + t;
+}
+function shBanner(html){
+  var e = document.getElementById("shareBanner");
+  if(!e) return;
+  if(!html){ e.style.display = "none"; e.innerHTML = ""; return; }
+  e.style.display = "flex";
+  e.innerHTML = html;
+}
+function cloneJSON(o){ return JSON.parse(JSON.stringify(o)); }
+function shareAuthor(){
+  return (document.getElementById("planAuthor").value || META.client || "未具名").trim() || "未具名";
+}
+function markCurrentPlan(stamp){
+  metaFromForm();
+  META.updated = stamp;
+  var p = curPlan();
+  if(!p){ newPlan(true); p = curPlan(); }
+  if(p){
+    p.data = collect();
+    p.name = document.getElementById("planName").value || p.name;
+    p.author = document.getElementById("planAuthor").value || p.author;
+    p.updated = stamp;
+  }
+  renderPlans();
+  refreshHome();
+}
+function sharePayload(stamp){
+  markCurrentPlan(stamp);
+  var meta = cloneJSON(META);
+  meta.sharedStamp = stamp;
+  return {v:1, updated:stamp, by:shareAuthor(), meta:meta, plans:cloneJSON(PLANS)};
+}
+function shareApply(o){
+  if(!o || !o.plans) return;
+  PLANS = o.plans;
+  if(o.meta){ META = o.meta; }
+  META.sharedStamp = o.updated || "";
+  META.updated = o.updated || META.updated || "";
+  if(PLANS.length) loadPlan(PLANS[PLANS.length-1].id); else newPlan(true);
+  renderPlans(); persist(); refreshHome();
+  if(canStore) DB.set("zoneproject", JSON.stringify(META));
+  SHARE.localDirty = false;
+  SHARE.remote = o;
+  SHARE.stamp = o.updated || "";
+  shBanner("");
+  shStat("已同步雲端版本 " + (o.updated || "未標示") + "　方案 " + PLANS.length + " 個");
+}
+function queueSharePush(delay){
+  if(!SHARE.ready || !SHARE_URL) return;
+  SHARE.localDirty = true;
+  if(SHARE.pushTimer) clearTimeout(SHARE.pushTimer);
+  SHARE.pushTimer = setTimeout(function(){ sharePush(false); }, delay || 1400);
+}
+function shareConflictBanner(o){
+  var box = document.getElementById("shareBanner");
+  if(!box){
+    var takeRemote = confirm("偵測到其他人剛更新資料。按「確定」載入對方版本；按「取消」保留目前內容並覆蓋雲端。");
+    if(takeRemote) shareApply(o); else sharePush(true);
+    return;
+  }
+  shBanner('<span>偵測到他人剛更新雲端版本 ' + (o.updated || "未標示") + '（' + (o.by || "未具名") + '）。</span>' +
+           '<button id="shTake">載入對方版本</button>' +
+           '<button id="shKeep">以目前內容覆蓋</button>');
+  document.getElementById("shTake").onclick = function(){ shareApply(o); };
+  document.getElementById("shKeep").onclick = function(){ sharePush(true); };
+}
+function shareCheck(auto){
+  if(!SHARE_URL){ shStat("未設定同步端點"); return; }
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", SHARE_URL + (SHARE_URL.indexOf("?")>=0?"&":"?") + "t=" + Date.now(), true);
+  xhr.onerror = function(){ shStat("同步端點連不上；若目前放在 GitHub Pages，請另外接一個可寫入 API"); };
+  xhr.onload = function(){
+    var o = null;
+    try{ o = JSON.parse(xhr.responseText); }catch(err){ o = null; }
+    if(xhr.status === 404){
+      shStat("同步端點尚未部署；GitHub 靜態頁面本身不能儲存共用資料");
+      return;
+    }
+    if(xhr.status < 200 || xhr.status >= 300 || !o){
+      shStat("同步端點回應失敗，請確認 SHARE_URL 與後端設定");
+      return;
+    }
+    SHARE.remote = o; SHARE.stamp = o.updated || "";
+    if(!o.plans){ shStat("雲端資料格式不正確"); return; }
+    if(!auto){ shareApply(o); return; }
+    if(!SHARE.stamp){ shStat("雲端已連線，等待第一筆資料"); return; }
+    if(META.sharedStamp && META.sharedStamp === SHARE.stamp && !SHARE.localDirty){
+      shStat("同步正常　版本 " + SHARE.stamp);
+      return;
+    }
+    if(SHARE.localDirty && META.sharedStamp && META.sharedStamp !== SHARE.stamp){
+      shStat("偵測到遠端更新，等待你決定要載入或覆蓋");
+      shareConflictBanner(o);
+      return;
+    }
+    shareApply(o);
+  };
+  xhr.send();
+}
+function sharePush(force){
+  if(!SHARE_URL){ shStat("未設定同步端點"); return; }
+  if(SHARE.pushing) return;
+  SHARE.pushing = true;
+  var stamp = nowStr();
+  var payload = sharePayload(stamp);
+  META.sharedStamp = stamp;
+  var xhr = new XMLHttpRequest();
+  xhr.open("PUT", SHARE_URL, true);
+  xhr.setRequestHeader("Content-Type", "application/json;charset=utf-8");
+  xhr.onerror = function(){
+    SHARE.pushing = false;
+    SHARE.localDirty = true;
+    shStat("同步上傳失敗，修改仍保留在你的瀏覽器");
+  };
+  xhr.onload = function(){
+    SHARE.pushing = false;
+    if(xhr.status < 200 || xhr.status >= 300){
+      SHARE.localDirty = true;
+      shStat("同步上傳失敗（HTTP " + xhr.status + "），請確認後端可接受 PUT");
+      return;
+    }
+    SHARE.localDirty = false;
+    SHARE.remote = payload;
+    SHARE.stamp = stamp;
+    if(canStore) DB.set("zoneproject", JSON.stringify(META));
+    shBanner("");
+    shStat((force ? "已覆蓋雲端版本" : "已同步到雲端") + "　版本 " + stamp + "　方案 " + PLANS.length + " 個");
+  };
+  xhr.send(JSON.stringify(payload));
+}
+function shareMake(){ sharePush(true); }
+function bootSync(){
+  SHARE.ready = true;
+  shStat("檢查中⋯");
+  shareCheck(true);
+  if(SHARE.timer) clearInterval(SHARE.timer);
+  SHARE.timer = setInterval(function(){ shareCheck(true); }, 2500);
+}
+var _sl2 = document.getElementById("btnShareLoad");
+if(_sl2) _sl2.addEventListener("click", function(){
+  if(!confirm("載入共用檔將覆蓋目前頁面的內容，確定繼續？")) return;
+  shareCheck(false);
+});
+var _sm = document.getElementById("btnShareMake");
+if(_sm) _sm.addEventListener("click", shareMake);
+
+/* ---------- 本機資料庫狀態 ---------- */
+function dbStatText(){
+  var el = document.getElementById("dbStat");
+  if(!el) return;
+  if(!canStore){
+    el.textContent = "此瀏覽器不允許本機儲存（可能為無痕模式），資料僅保留於本次瀏覽";
+    return;
+  }
+  var kb = (DB.bytes()/1024).toFixed(1);
+  el.textContent = "瀏覽器本機資料庫　方案 " + PLANS.length + " 個　已用 " + kb + " KB　自動存檔已啟用";
+}
+var _bd = document.getElementById("btnDbBackup");
+if(_bd) _bd.addEventListener("click", backup);
+var _bc = document.getElementById("btnDbClear");
+if(_bc) _bc.addEventListener("click", function(){
+  if(!confirm("將清除本機所有方案與專案資訊，且無法復原。建議先匯出備份。確定清除？")) return;
+  DB.del("zoneplans"); DB.del("zoneproject");
+  PLANS = []; META = {project:"", client:"", addr:"", note:"", updated:""};
+  curId = null; newPlan(true); renderPlans(); metaToForm(); refreshHome(); dbStatText();
+  status.textContent = "已清除本機資料";
+});
+
+if(canStore){
+  DB.get("zoneproject").then(function(r){
+    if(r && r.value){ META = JSON.parse(r.value); }
+    metaToForm(); refreshHome(); dbStatText();
+    bootSync();
+  }).catch(function(){ metaToForm(); refreshHome(); dbStatText(); bootSync(); });
+}else{
+  metaToForm(); refreshHome(); dbStatText(); bootSync();
+}
+
+})();
+</script>
+<script>
+(function(){
+  var NAV = [
+    {f:"1F", rooms:[["R-101","玄關／客廳／餐廚"]]},
+    {f:"2F", rooms:[["R-201","主臥室"],["R-202","客房"]]},
+    {f:"3F", rooms:[["R-301","頂樓酒吧"],["R-302","辦公室"]]}
+  ];
+  var curFloor = "1F", curRoom = "R-101";
+  var pkF = document.getElementById("pkFloor"), pkR = document.getElementById("pkRoom");
+
+  NAV.forEach(function(g){
+    var b = document.createElement("button");
+    b.textContent = g.f; b.setAttribute("aria-pressed", String(g.f === curFloor));
+    b.addEventListener("click", function(){
+      curFloor = g.f; drawFloors(); drawRooms();
+      if(g.rooms.length) pick(g.rooms[0][0]);
+    });
+    pkF.appendChild(b);
+  });
+  function drawFloors(){
+    Array.prototype.slice.call(pkF.children).forEach(function(b, i){
+      b.setAttribute("aria-pressed", String(NAV[i].f === curFloor));
+    });
+  }
+  function drawRooms(){
+    var g = NAV.filter(function(x){ return x.f === curFloor; })[0];
+    pkR.innerHTML = "";
+    g.rooms.forEach(function(r){
+      var b = document.createElement("button");
+      b.textContent = r[1]; b.setAttribute("aria-pressed", String(r[0] === curRoom));
+      b.addEventListener("click", function(){ pick(r[0]); });
+      pkR.appendChild(b);
+    });
+    drawZones();
+  }
+  function drawZones(){
+    var pkZ = document.getElementById("pkZone");
+    if(!pkZ) return;
+    pkZ.innerHTML = "";
+    var list = window.__zoneList ? window.__zoneList(curRoom) : [];
+    list.forEach(function(z){
+      var b = document.createElement("button");
+      b.className = "zk"; b.title = z.n;
+      b.innerHTML = '<i style="background:'+z.c+'"></i>'+z.k+' '+z.n;
+      b.addEventListener("click", function(){
+        if(!document.getElementById("viewzone").classList.contains("on")) show("zone");
+        setTimeout(function(){ if(window.__gotoZone) window.__gotoZone(curRoom+"-"+z.k); }, 60);
+      });
+      pkZ.appendChild(b);
+    });
+  }
+  window.__pickRoom = pick;
+  window.__redrawZones = drawZones;
+  window.__setRoomLabel = function(id, name){
+    NAV.forEach(function(g){ g.rooms.forEach(function(r){ if(r[0] === id) r[1] = name; }); });
+    drawRooms();
+  };
+  function pick(id){
+    curRoom = id;
+    NAV.forEach(function(g){ g.rooms.forEach(function(r){ if(r[0] === id) curFloor = g.f; }); });
+    drawFloors(); drawRooms();
+    if(window.__selectRoom) window.__selectRoom(id);
+    if(document.getElementById("viewzone").classList.contains("on")) scrollToRoom(id);
+  }
+  function scrollToRoom(id){
+    var el = document.getElementById("room-" + id);
+    if(el) window.scrollTo({top: el.offsetTop - 100, behavior: "smooth"});
+  }
+  window.__onRoomChange = function(id){
+    if(id === curRoom) return;
+    curRoom = id;
+    NAV.forEach(function(g){ g.rooms.forEach(function(r){ if(r[0] === id) curFloor = g.f; }); });
+    drawFloors(); drawRooms();
+  };
+  drawRooms();
+
+  var btns = Array.prototype.slice.call(document.querySelectorAll("#tabs button"));
+  function show(t){
+    btns.forEach(function(b){ b.setAttribute("aria-selected", String(b.dataset.t === t)); });
+    document.getElementById("viewhome").classList.toggle("on", t === "home");
+    document.getElementById("view3d").classList.toggle("on", t === "3d");
+    document.getElementById("viewzone").classList.toggle("on", t === "zone");
+    document.getElementById("picker").style.display = (t === "home") ? "none" : "";
+    if(t === "home" && window.__refreshHome){ window.__refreshHome(); window.scrollTo(0,0); }
+    document.documentElement.style.overflow = (t === "3d") ? "hidden" : "";
+    document.body.style.overflow = (t === "3d") ? "hidden" : "";
+    if(t === "3d" && window.__resize3d){ setTimeout(window.__resize3d, 30); }
+    if(t === "zone") setTimeout(function(){ scrollToRoom(curRoom); }, 20);
+  }
+  btns.forEach(function(b){ b.addEventListener("click", function(){ show(b.dataset.t); }); });
+  window.__showTab = show;
+  show("home");
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
+</html>
