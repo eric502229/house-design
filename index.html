@@ -2065,6 +2065,7 @@ function queueAuto(){
 document.addEventListener("input", function(e){
   var k = e.target.getAttribute && e.target.getAttribute("data-k");
   if(!k) return;
+  markEditing();
   touch(); queueAuto();
   queueSharePush(1200);
   if(/-zname$/.test(k)){ syncZoneLabel(k.replace(/-zname$/, "")); }
@@ -2073,7 +2074,7 @@ document.addEventListener("input", function(e){
   }
 });
 ["planName","planAuthor"].forEach(function(id){
-  document.getElementById(id).addEventListener("input", function(){ touch(); queueSharePush(1200); });
+  document.getElementById(id).addEventListener("input", function(){ markEditing(); touch(); queueSharePush(1200); });
 });
 
 /* ---------- 啟動 ---------- */
@@ -2175,13 +2176,14 @@ document.getElementById("hrooms").addEventListener("click", function(e){
 document.getElementById("mSave").addEventListener("click", saveMeta);
 MK.forEach(function(id){
   document.getElementById(id).addEventListener("input", function(){
+    markEditing();
     document.getElementById("mStatus").textContent = "有未儲存的變更";
   });
 });
 
 
 /* ---------- 專案即時同步 ---------- */
-var SHARE = {remote:null, stamp:"", timer:0, pushTimer:0, pushing:false, localDirty:false, ready:false};
+var SHARE = {remote:null, stamp:"", timer:0, pushTimer:0, pushing:false, localDirty:false, ready:false, editing:false, lastInputAt:0};
 function shStat(t){
   var e=document.getElementById("shareStat"); if(e) e.textContent=t;
   var s=document.getElementById("syncMiniStat"); if(s) s.textContent="同步狀態：" + t;
@@ -2194,6 +2196,14 @@ function shBanner(html){
   e.innerHTML = html;
 }
 function cloneJSON(o){ return JSON.parse(JSON.stringify(o)); }
+function markEditing(){
+  SHARE.editing = true;
+  SHARE.lastInputAt = Date.now();
+}
+function canApplyRemoteNow(){
+  if(!SHARE.editing) return true;
+  return (Date.now() - SHARE.lastInputAt) > 4000;
+}
 function shareAuthor(){
   return (document.getElementById("planAuthor").value || META.client || "未具名").trim() || "未具名";
 }
@@ -2219,6 +2229,12 @@ function sharePayload(stamp){
 }
 function shareApply(o){
   if(!o || !o.plans) return;
+  if(!canApplyRemoteNow()){
+    SHARE.remote = o;
+    SHARE.stamp = o.updated || "";
+    shStat("偵測到雲端更新，等你停止輸入後自動套用");
+    return;
+  }
   PLANS = o.plans;
   if(o.meta){ META = o.meta; }
   META.sharedStamp = o.updated || "";
@@ -2227,6 +2243,7 @@ function shareApply(o){
   renderPlans(); persist(); refreshHome();
   if(canStore) DB.set("zoneproject", JSON.stringify(META));
   SHARE.localDirty = false;
+  SHARE.editing = false;
   SHARE.remote = o;
   SHARE.stamp = o.updated || "";
   shBanner("");
@@ -2280,6 +2297,12 @@ function shareCheck(auto){
       shareConflictBanner(o);
       return;
     }
+    if(!canApplyRemoteNow()){
+      SHARE.remote = o;
+      SHARE.stamp = o.updated || "";
+      shStat("偵測到雲端更新，等你停止輸入後自動套用");
+      return;
+    }
     shareApply(o);
   };
   xhr.send();
@@ -2307,6 +2330,7 @@ function sharePush(force){
       return;
     }
     SHARE.localDirty = false;
+    SHARE.editing = false;
     SHARE.remote = payload;
     SHARE.stamp = stamp;
     if(canStore) DB.set("zoneproject", JSON.stringify(META));
@@ -2321,7 +2345,13 @@ function bootSync(){
   shStat("檢查中⋯");
   shareCheck(true);
   if(SHARE.timer) clearInterval(SHARE.timer);
-  SHARE.timer = setInterval(function(){ shareCheck(true); }, 2500);
+  SHARE.timer = setInterval(function(){
+    if(SHARE.remote && canApplyRemoteNow() && !SHARE.localDirty){
+      var pending = SHARE.remote;
+      if((pending.updated || "") !== (META.sharedStamp || "")) shareApply(pending);
+    }
+    shareCheck(true);
+  }, 2500);
 }
 var _sl2 = document.getElementById("btnShareLoad");
 if(_sl2) _sl2.addEventListener("click", function(){
