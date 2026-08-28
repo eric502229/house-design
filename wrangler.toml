@@ -1,0 +1,6 @@
+name = "roomsync-cloudflare-pages"
+compatibility_date = "2026-08-28"
+
+[[kv_namespaces]]
+binding = "ROOMSYNC"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
